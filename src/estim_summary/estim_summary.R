@@ -48,7 +48,6 @@ orderly_artefact(files = c("results/true_params.rds",
                            "results/convergence_issues.rds",
                            "results/scenario_convergence.rds",
                            "results/chain_diagnostics.rds",
-                           "results/acceptance_rates.rds",
                            "results/convergence_issues_by_individual.rds",
                            "results/indiv_performance_summary.rds"),
                  description = "MCMC Summary outputs for a single scenario")
@@ -223,16 +222,6 @@ extract_draws_and_summary <- function(pars_array, scenario_name, sim_idx) {
   list(summary = summary, tidy_draws = tidy)
 }
 
-calc_acceptance_rate <- function(samples) {
-  initial <- samples$full_chains$initial
-  initial <- array(initial, c(dim(initial)[1], 1, dim(initial)[2]))
-  pars <- abind::abind(initial, samples$full_chains$pars, along = 2)
-  
-  n_accept <- apply(apply(pars, c(1, 3), diff) != 0, c(2, 3), sum)
-  n_steps <- dim(pars)[2] - 1
-  
-  n_accept / n_steps
-}
 
 # Process single Scenario ----------------------------------------------------
 estim_list <- 
@@ -407,15 +396,6 @@ all_results <- future_map(seq_along(estim_list), function(sim_idx) {
   
   event_status <- bind_rows(get_event_status(0.5), get_event_status(0.9))
   
-  acc_matrix <- calc_acceptance_rate(estim_obj)
-  acc_df <- as.data.frame(acc_matrix) %>%
-    mutate(param_idx = row_number(),
-           scenario = scenario,
-           simulation = sim_idx) %>%
-    pivot_longer(cols = -c(param_idx, scenario, simulation),
-                 names_to = "chain",
-                 values_to = "acceptance_rate")
-  
   samples_df_full <- posterior::as_draws_df(estim_obj$full_chains$pars)
   diag_full <- posterior::summarise_draws(samples_df_full) %>%
     mutate(burnin_applied = FALSE, scenario = scenario, simulation = sim_idx)
@@ -433,7 +413,6 @@ all_results <- future_map(seq_along(estim_list), function(sim_idx) {
     empirical    = empirical,
     observed_pat = observed_pat,
     event_status = event_status,
-    acceptance   = acc_df,
     diagnostics  = chain_diag_df
   )
 }, .options = furrr_options(
@@ -452,7 +431,6 @@ observed_patterns <- bind_rows(lapply(all_results, `[[`, "observed_pat")) %>%
   apply_scenario_labels()
 indiv_event_status <- bind_rows(lapply(all_results, `[[`, "event_status")) %>%
   apply_scenario_labels()
-acceptance_rates_df <- bind_rows(lapply(all_results, `[[`, "acceptance"))
 chain_diagnostics_df <- bind_rows(lapply(all_results, `[[`, "diagnostics"))
 
 rm(all_results)
@@ -732,7 +710,6 @@ saveRDS(sim_summaries, "results/sim_summaries.rds")
 saveRDS(agg_summaries, "results/agg_summaries.rds")
 saveRDS(convergence_issues, "results/convergence_issues.rds")
 saveRDS(scenario_convergence, "results/scenario_convergence.rds")
-saveRDS(acceptance_rates_df, "results/acceptance_rates.rds")
 saveRDS(chain_diagnostics_df, "results/chain_diagnostics.rds")
 saveRDS(observed_patterns, "results/observed_patterns.rds")
 saveRDS(indiv_obs_summary, "results/indiv_obs_summary.rds")

@@ -20,11 +20,9 @@ for (s in scenarios) {
   remote_files <- c(
     "results/true_params.rds",
     "results/all_draws.rds",
-    "results/acceptance_rates.rds",
     "results/sim_summaries.rds",
     "results/agg_summaries.rds",
     "results/observed_patterns.rds",
-    "results/indiv_obs_summary.rds",
     "results/obs_pattern_summary.rds",
     "results/indiv_event_status.rds",
     "results/event_confusion.rds",
@@ -42,10 +40,7 @@ for (s in scenarios) {
   )
 }
 
-orderly_artefact(files = c("figures/trace_error.pdf",
-                           "figures/trace_delays_10.pdf",
-                           "figures/trace_delays_all.pdf",
-                           "figures/bias_plot_delays_gt.pdf",
+orderly_artefact(files = c("figures/bias_plot_delays_gt.pdf",
                            "figures/bias_plot_error_gt.pdf",
                            "figures/bias_plot_cv_gt.pdf",
                            "figures/coverage_plot.pdf",
@@ -54,13 +49,10 @@ orderly_artefact(files = c("figures/trace_error.pdf",
                            "figures/posterior_prob_error.pdf",
                            "figures/observed_patterns.pdf",
                            "figures/ess_plot.pdf",
-                           "figures/acceptance_rates.pdf",
                            "figures/problem_traces",
                            "figures/rhat_vs_ess.pdf",
-                           "figures/width_vs_ess.pdf",
                            "figures/sensitivity_events.pdf",
-                           "figures/sensitivity_individuals.pdf",
-                           "figures/problem_shared_patterns.pdf"),
+                           "figures/sensitivity_individuals.pdf"),
                  description = "Diagnostic figures")
 
 dir.create("figures", recursive = TRUE, showWarnings = FALSE)
@@ -71,13 +63,11 @@ all_draws <- map_dfr(scenarios, ~readRDS(glue("all_draws_{.x}.rds")))
 sim_summaries <- map_dfr(scenarios, ~readRDS(glue("sim_summaries_{.x}.rds")))
 agg_summaries <- map_dfr(scenarios, ~readRDS(glue("agg_summaries_{.x}.rds")))
 observed_patterns <- map_dfr(scenarios, ~readRDS(glue("observed_patterns_{.x}.rds")))
-indiv_obs_summary <- map_dfr(scenarios, ~readRDS(glue("indiv_obs_summary_{.x}.rds")))
 obs_pattern_summary <- map_dfr(scenarios, ~readRDS(glue("obs_pattern_summary_{.x}.rds")))
 indiv_event_status <- map_dfr(scenarios, ~readRDS(glue("indiv_event_status_{.x}.rds")))
 event_confusion <- map_dfr(scenarios, ~readRDS(glue("event_confusion_{.x}.rds")))
 indiv_performance <- map_dfr(scenarios, ~readRDS(glue("indiv_performance_summary_{.x}.rds")))
 problem_sims <- map_dfr(scenarios, ~readRDS(glue("convergence_issues_by_individual_{.x}.rds")))
-acceptance_rates  <- map_dfr(scenarios, ~readRDS(glue("acceptance_rates_{.x}.rds")))
 
 delay_mapping <- tibble::tribble(
   ~param_idx, ~delay_from,       ~delay_to,         ~group,
@@ -139,7 +129,6 @@ all_draws <- apply_factor_levels(all_draws)
 sim_summaries <- apply_factor_levels(sim_summaries)
 agg_summaries <- apply_factor_levels(agg_summaries)
 observed_patterns <- apply_factor_levels(observed_patterns)
-indiv_obs_summary <- apply_factor_levels(indiv_obs_summary)
 obs_pattern_summary <- apply_factor_levels(obs_pattern_summary)
 indiv_event_status <- apply_factor_levels(indiv_event_status)
 event_confusion <- apply_factor_levels(event_confusion)
@@ -150,26 +139,6 @@ param_order <- c("prob_error",
                  paste0("delay_mean", 1:9),
                  paste0("delay_cv", 1:9))
 
-acceptance_rates <- acceptance_rates %>%
-  mutate(scenario = recode(scenario, !!!scenario_labels)) %>%
-  mutate(variable = param_order[param_idx]) %>%
-  mutate(
-    param_idx = case_when(
-      variable == "prob_error" ~ 0,
-      grepl("delay_mean|delay_cv", variable) ~
-        as.numeric(str_extract(variable, "\\d+")),
-      TRUE ~ NA
-    ),
-    type  = ifelse(grepl("^delay_cv", variable), "cv", "mean"),
-    chain = as.integer(gsub("\\D", "", chain))
-  ) %>%
-  select(-variable) %>%
-  pivot_wider(names_from = type, values_from = acceptance_rate) %>%
-  rename(acc_mean = mean, acc_cv = cv) %>%
-  left_join(delay_mapping, by = "param_idx") %>%
-  mutate(param_label = ifelse(param_idx == 0, "probability of error",
-                              as.character(param_label))) %>%
-  apply_factor_levels()
 
 # Plots ----------------------------------------------------------------------
 
@@ -237,84 +206,6 @@ plot_indiv_sensitivity <- plot_data %>%
 ggsave("figures/sensitivity_individuals.pdf",
        plot_indiv_sensitivity, width = 14, height = 8)
 
-# Trace plot: Prob error
-trace_prob_error <- all_draws %>%
-  filter(param_idx == 0 & iteration > 100) %>%
-  left_join(select(true_params, scenario, param_idx, true_mean),
-            by = c("scenario", "param_idx")) %>%
-  mutate(sim_chain = paste(simulation, chain, sep = "_")) %>%
-  ggplot(aes(x = iteration, y = post_mean,
-             colour = factor(chain), group = sim_chain)) +
-  rasterise(geom_line(alpha = 0.3), dpi = 300) +
-  geom_hline(aes(yintercept = true_mean),
-             linetype = "dashed", linewidth = 0.8, colour = "black") +
-  facet_grid(cols = vars(scenario), scales = "free_y") +
-  labs(y = "Probability of Error", x = "Iteration",
-       title = "Trace plots for probability of error (100 simulations)",
-       subtitle = glue("MCMC: {n_steps} steps, {burnin} burn-in"),
-       colour = "Chain") +
-  theme_minimal() +
-  theme(strip.text = element_text(size = 8),
-        panel.border = element_rect(colour = "darkgrey", fill = NA, linewidth = 1),
-        axis.title.x = element_text(margin = margin(t = 10)),
-        axis.title.y = element_text(margin = margin(r = 10)))
-
-ggsave("figures/trace_error.pdf", trace_prob_error, width = 14, height = 4)
-
-# Trace plot: Delays
-make_trace_plot <- function(data, y_var, true_var, title, y_label,
-                            add_symbols = FALSE) {
-  p <- ggplot(data, aes(x = iteration, y = {{y_var}})) +
-    rasterise(geom_line(alpha = 0.3,
-                        aes(colour = param_label,
-                            group = interaction(param_label, simulation))),
-              dpi = 300) +
-    geom_hline(aes(yintercept = {{true_var}}, colour = param_label),
-               linetype = "dashed", linewidth = 0.8) +
-    facet_grid(rows = vars(group), cols = vars(scenario), scales = "free_y") +
-    labs(y = y_label, x = "Iteration", colour = "Delay", title = title) +
-    theme_minimal() +
-    theme(strip.text = element_text(size = 10, face = "bold"),
-          panel.border = element_rect(colour = "darkgrey", fill = NA, linewidth = 1),
-          axis.title.x = element_text(margin = margin(t = 10)),
-          axis.title.y = element_text(margin = margin(r = 10)))
-  
-  if (add_symbols) {
-    true_points <- data %>%
-      distinct(scenario, group, param_label, {{true_var}}) %>%
-      crossing(iteration = c(min(data$iteration), max(data$iteration)))
-    
-    p <- p + geom_point(data = true_points,
-                        aes(x = iteration, y = {{true_var}}, fill = param_label),
-                        shape = 23, size = 3, colour = "black",
-                        inherit.aes = FALSE, show.legend = FALSE)
-  }
-  p
-}
-
-trace_data_base <- all_draws %>%
-  filter(param_idx > 0) %>%
-  left_join(select(true_params, scenario, param_idx, group, true_mean),
-            by = c("scenario", "param_idx", "group"))
-
-if (burnin == 0) trace_data_base <- trace_data_base %>% filter(iteration > 100)
-
-trace_10 <- make_trace_plot(
-  trace_data_base %>% filter(simulation <= 10),
-  post_mean, true_mean,
-  "Trace plots (first 10 simulations)", "Mean Delay",
-  add_symbols = TRUE
-)
-
-trace_all <- make_trace_plot(
-  trace_data_base,
-  post_mean, true_mean,
-  "Trace plots (all simulations)", "Mean Delay",
-  add_symbols = TRUE
-)
-
-ggsave("figures/trace_delays_10.pdf", trace_10, width = 14, height = 10)
-ggsave("figures/trace_delays_all.pdf", trace_all, width = 14, height = 10)
 
 # Bias plots
 make_bias_plot <- function(data, bias_avg_col, bias_sd_col, title, subtitle) {
@@ -564,34 +455,6 @@ ggsave("figures/ess_plot.pdf",
          ),
        width = 14, height = 7)
 
-# Acceptance
-acceptance_long <- acceptance_rates %>%
-  pivot_longer(c(acc_mean, acc_cv),
-               names_to  = "type",
-               values_to = "acceptance_rate",
-               names_prefix = "acc_") %>%
-  filter(!is.na(acceptance_rate)) %>%
-  mutate(type = factor(type, levels = c("mean", "cv"), labels = c("Mean", "CV")))
-
-plot_acceptance <- acceptance_long %>%
-  filter(param_label != "probability of error") %>% 
-  ggplot(aes(x = acceptance_rate, y = param_label, fill = group)) +
-  geom_boxplot(position = position_dodge(width = 0.8), width = 0.7, outlier.size = 1) +
-  geom_vline(xintercept = 0.234, linetype = "dashed", colour = "black", linewidth = 0.8) +
-  facet_grid(type ~ scenario) +
-  scale_x_continuous(labels = scales::percent) +
-  scale_y_discrete(limits = rev) +
-  labs(title = "MCMC Acceptance Rates",
-       subtitle = "Distribution across simulations. Dashed line = 23.4%",
-       x = "Acceptance Rate",
-       y = "Parameter",
-       fill = "Group") +
-  theme_bw() +
-  theme(strip.text = element_text(size = 9, face = "bold"),
-        panel.border = element_rect(colour = "darkgrey", fill = NA, linewidth = 1),
-        legend.position = "bottom")
-
-ggsave("figures/acceptance_rates.pdf", plot_acceptance, width = 16, height = 10)
 
 # Problem traces
 dir.create("figures/problem_traces", recursive = TRUE, showWarnings = FALSE)
@@ -657,55 +520,3 @@ ggsave("figures/rhat_vs_ess.pdf",
                axis.title.x = element_text(margin = margin(t = 10)),
                axis.title.y = element_text(margin = margin(r = 10))),
        width = 12, height = 8)
-
-# see if low ESS correlates with wider crIs
-low_ess_threshold <- 200
-ggsave("figures/width_vs_ess.pdf",
-       sim_summaries %>%
-         mutate(is_low_ess = ess_bulk_est < low_ess_threshold) %>%
-         ggplot(aes(x = is_low_ess, y = width95, colour = is_low_ess)) +
-         facet_grid(rows = vars(scenario), cols = vars(param_label),
-                    scales = "free_y") +
-         geom_jitter(width = 0.2, alpha = 0.6, size = 0.8) +
-         labs(title = "Low ESS vs credible intervals width",
-              x = "ESS < 200", y = "Width of 95% CrI") +
-         theme_bw() +
-         theme(strip.text = element_text(size = 8, face = "bold"),
-               legend.position = "none",
-               axis.title.x = element_text(margin = margin(t = 10)),
-               axis.title.y = element_text(margin = margin(r = 10))),
-       width = 12, height = 8)
-
-# Compare features
-pattern_comparison <- indiv_obs_summary %>%
-  left_join(
-    problem_combos %>% mutate(is_problem = TRUE),
-    by = c("scenario", "simulation")
-  ) %>%
-  mutate(is_problem = replace_na(is_problem, FALSE)) %>%
-  group_by(is_problem, scenario, group, pattern) %>%
-  summarise(n = n(), .groups = "drop") %>%
-  group_by(is_problem, scenario, group) %>%
-  mutate(pct = n / sum(n) * 100)
-
-plot_pattern_comparison <- ggplot(pattern_comparison, 
-                                  aes(x = reorder(pattern, n),
-                                      y = pct,
-                                      fill = is_problem)) +
-  geom_col(position = position_dodge(width = 0.8), width = 0.7) +
-  scale_fill_manual(values = c("FALSE" = "lightgrey", "TRUE" = "firebrick"),
-                    labels = c("Good", "Problematic")) +
-  coord_flip() +
-  facet_grid(rows = vars(group), cols = vars(scenario), scales = "free_y") +
-  labs(title = "Are specific error patterns driving non-convergence?",
-       subtitle = "Comparing pattern frequencies in problematic vs good runs",
-       x = "Simulated Pattern",
-       y = "Percentage of Individuals (%)",
-       fill = "Run") +
-  theme_minimal() +
-  theme(strip.text = element_text(size = 9, face = "bold"),
-        panel.border = element_rect(colour = "darkgrey", fill = NA, linewidth = 1),
-        legend.position = "top")
-
-ggsave("figures/problem_shared_patterns.pdf", plot_pattern_comparison,
-       width = 16, height = 8)
