@@ -61,16 +61,16 @@ orderly_artefact(files = c("figures/bias_plot_delays_gt.pdf",
 dir.create("figures", recursive = TRUE, showWarnings = FALSE)
 
 # Bind all the individual scenarios together -----------------------------------
-true_params <- map_dfr(scenarios, ~readRDS(glue("true_params_{.x}.rds")))
-all_draws <- map_dfr(scenarios, ~readRDS(glue("all_draws_{.x}.rds")))
-sim_summaries <- map_dfr(scenarios, ~readRDS(glue("sim_summaries_{.x}.rds")))
-agg_summaries <- map_dfr(scenarios, ~readRDS(glue("agg_summaries_{.x}.rds")))
-observed_patterns <- map_dfr(scenarios, ~readRDS(glue("observed_patterns_{.x}.rds")))
-obs_pattern_summary <- map_dfr(scenarios, ~readRDS(glue("obs_pattern_summary_{.x}.rds")))
-indiv_event_status <- map_dfr(scenarios, ~readRDS(glue("indiv_event_status_{.x}.rds")))
-event_confusion <- map_dfr(scenarios, ~readRDS(glue("event_confusion_{.x}.rds")))
-indiv_performance <- map_dfr(scenarios, ~readRDS(glue("indiv_performance_summary_{.x}.rds")))
-problem_sims <- map_dfr(scenarios, ~readRDS(glue("convergence_issues_by_individual_{.x}.rds")))
+true_params <- combine_df(scenarios, "true_params")
+all_draws <- combine_df(scenarios, "all_draws")
+sim_summaries <- combine_df(scenarios, "sim_summaries")
+agg_summaries <- combine_df(scenarios, "agg_summaries")
+observed_patterns <- combine_df(scenarios, "observed_patterns")
+obs_pattern_summary <- combine_df(scenarios, "obs_pattern_summary")
+indiv_event_status <- combine_df(scenarios, "indiv_event_status")
+event_confusion <- combine_df(scenarios, "event_confusion")
+indiv_performance <- combine_df(scenarios, "indiv_performance_summary")
+problem_sims <- combine_df(scenarios, "convergence_issues_by_individual")
 
 delay_mapping <- tibble::tribble(
   ~param_idx, ~delay_from,       ~delay_to,         ~group,
@@ -106,38 +106,6 @@ scenario_labels <- c(
   "lognormal_delays" = "Lognormal delays"
 )
 
-scenario_labels <- scenario_labels[intersect(names(scenario_labels), scenarios)]
-scenario_labels <- factor(scenario_labels, levels = scenario_labels)
-
-# Re-apply correct factor orderings after the bind_rows ----------------------
-apply_factor_levels <- function(df) {
-  if("scenario" %in% names(df)) {
-    df$scenario <- factor(df$scenario, levels = unname(scenario_labels))
-  }
-  if("group" %in% names(df)) {
-    df$group <- factor(df$group, levels = c("community-alive", "community-dead", 
-                                            "hospitalised-alive", "hospitalised-dead"))
-  }
-  if("param_label" %in% names(df)) {
-    df$param_label <- factor(df$param_label, levels = c(
-      "probability of error", "onset to report", "onset to death", 
-      "onset to hospitalisation", "hospitalisation to discharge", "hospitalisation to death"
-    ))
-  }
-  df
-}
-
-true_params <- apply_factor_levels(true_params)
-all_draws <- apply_factor_levels(all_draws)
-sim_summaries <- apply_factor_levels(sim_summaries)
-agg_summaries <- apply_factor_levels(agg_summaries)
-observed_patterns <- apply_factor_levels(observed_patterns)
-obs_pattern_summary <- apply_factor_levels(obs_pattern_summary)
-indiv_event_status <- apply_factor_levels(indiv_event_status)
-event_confusion <- apply_factor_levels(event_confusion)
-indiv_performance <- apply_factor_levels(indiv_performance)
-problem_sims <- apply_factor_levels(problem_sims)
-
 param_order <- c("prob_error",
                  paste0("delay_mean", 1:9),
                  paste0("delay_cv", 1:9))
@@ -146,66 +114,10 @@ param_order <- c("prob_error",
 # Plots ----------------------------------------------------------------------
 
 # Event level sensitivity
-plot_event_sensitivity <- event_confusion %>%
-  filter(metric_type == "Sensitivity") %>%
-  mutate(event = factor(event, levels = c("onset", "report",
-                                          "hospitalisation",
-                                          "discharge", "death"))) %>%
-  ggplot(aes(x = event, y = group, fill = pct_accuracy)) +
-  geom_tile(colour = "white", linewidth = 0.5) +
-  geom_text(aes(label = sprintf("%.0f", pct_accuracy)),
-            size = 2.8, colour = "grey20") +
-  facet_grid(threshold ~ scenario) +
-  scale_fill_gradient2(midpoint = 50, low = "firebrick",
-                       mid = "white", high = "steelblue",
-                       limits = c(0, 100), na.value = "grey95") +
-  scale_y_discrete(drop = FALSE, limits = rev) +
-  labs(title    = "Sensitivity in identifying erroneous dates",
-       subtitle = "Percentage of true errors correctly flagged",
-       x = "Event", y = "Group", fill = "Sensitivity (%)") +
-  theme_bw() +
-  theme(strip.text   = element_text(size = 9, face = "bold"),
-        axis.text.x  = element_text(angle = 45, hjust = 1),
-        panel.border = element_rect(colour = "darkgrey",
-                                    fill = NA, linewidth = 1),
-        panel.grid   = element_blank())
-
 ggsave("figures/sensitivity_events.pdf",
-       plot_event_sensitivity, width = 14, height = 6)
-
-# Filter out scenarios that have no true errors simulated
-plot_data <- indiv_performance %>%
-  filter(!scenario %in% c("Missing dates only (0.2)", "No errors or missing dates"))
-
-# Calculate the averages for sensitivity and specificity per threshold and scenario
-avg_metrics <- plot_data %>%
-  filter(!is.na(accuracy), metric_type %in% c("Sensitivity", "Specificity")) %>%
-  group_by(scenario, threshold, metric_type) %>%
-  summarise(mean_val = mean(accuracy, na.rm = TRUE), .groups = "drop") %>%
-  pivot_wider(names_from = metric_type, values_from = mean_val) %>%
-  mutate(label_text = sprintf("Avg Sens: %.2f\nAvg Spec: %.2f", Sensitivity, Specificity))
+       plot_event_sensitivity(event_confusion), width = 14, height = 6)
 
 # Individual level sensitivity
-plot_indiv_sensitivity <- plot_data %>%
-  filter(metric_type == "Sensitivity") %>%
-  filter(!is.na(accuracy)) %>%
-  ggplot(aes(x = accuracy, y = group)) +
-  geom_boxplot(fill = "dodgerblue", alpha = 0.5, width = 0.7, outlier.size = 1) +
-  geom_text(data = avg_metrics, aes(x = -Inf, y = Inf, label = label_text), 
-            inherit.aes = FALSE, hjust = -0.1, vjust = 1.2, size = 3,
-            fontface = "bold", colour = "navy") +
-  facet_grid(threshold ~ scenario) +
-  scale_x_continuous(limits = c(0, 1)) +
-  scale_y_discrete(drop = FALSE, limits = rev) +
-  labs(title = "Individual-level Sensitivity",
-       subtitle = "Distribution across simulations (individuals with >= 2 recorded dates)",
-       y = "Group",
-       x = "Sensitivity") +
-  theme_bw() +
-  theme(strip.text = element_text(size = 9, face = "bold"),
-        panel.border = element_rect(colour = "darkgrey", fill = NA, linewidth = 1),
-        legend.position = "none")
-
 ggsave("figures/sensitivity_individuals.pdf",
        plot_indiv_sensitivity, width = 14, height = 8)
 
