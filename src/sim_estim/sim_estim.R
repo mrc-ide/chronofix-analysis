@@ -1,15 +1,24 @@
 library(orderly)
 library(chronofix)
-
-orderly_resource("support.R")
-orderly_shared_resource("util.R")
-source("support.R")
-source("util.R")
-
-version_check("chronofix", "0.0.5")
+library(monty)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(glue)
+library(posterior)
+library(bayesplot)
 
 pars <- orderly_parameters(scenario = "baseline",
                            dataset = 1)
+
+orderly_resource("support.R")
+orderly_resource("plot.R")
+orderly_shared_resource("util.R")
+source("support.R")
+source("plot.R")
+source("util.R")
+
+version_check("chronofix", "0.0.6")
 
 scenario <- pars$scenario
 dataset <- pars$dataset
@@ -20,6 +29,7 @@ thinning_factor <- 20
 
 orderly_dependency("sim_params", "latest", 
                    c("date_params.rds",
+                     "error_params.rds",
                      "scenarios.rds"))
 data_filename <- paste0("outputs/sim_data_", scenario, "_", dataset, ".rds")
 orderly_dependency("sim_data", "latest", 
@@ -27,15 +37,16 @@ orderly_dependency("sim_data", "latest",
 
 orderly_artefact(description = "MCMC outputs for simulation scenarios",
                  files = c("sim_estim.rds",
-                           "pars_summary.rds"))
-
-
-
+                           "pars_summary.rds",
+                           "errors_summary.rds",
+                           "figures/rankplots.pdf",
+                           "figures/traceplots.pdf"))
 
 
 # Read in dependencies --------------------------------------------------------
 
 date_params <- readRDS("date_params.rds")
+error_params <- readRDS("error_params.rds")
 scenarios <- readRDS("scenarios.rds")
 sim_data <- readRDS("sim_data.rds")
 
@@ -63,15 +74,30 @@ hyperparameters <- chronofix_hyperparameters(
 # Run MCMC -------------------------------------------------------------------
 
 date_model <- scenarios[[scenario]]$date_model
+error_model <- scenarios[[scenario]]$error_model
 delay_info <- date_params[[date_model]]$delay_info
 
 model <- chronofix_model(sim_data$observed_data, delay_info,
                          hyperparameters, control)
 samples <- chronofix_mcmc_run(model, sampler, control = control)
-
-pars_summary <- summarise_pars(samples, delay_info)
-
 saveRDS(samples, "sim_estim.rds")
 
-saveRDS(pars_summary, "pars_summary.rds")
 
+# Summarise results and produce diagnostic plots-------------------------------
+
+pars_summary <- summarise_pars(samples, delay_info, 
+                               error_params[[error_model]]$prob_error)
+
+errors_summary <- summarise_errors(samples, sim_data)
+saveRDS(errors_summary, "errors_summary.rds")
+
+dir.create("figures", showWarnings = FALSE)
+
+ggsave("figures/traceplots.pdf", traceplots(samples, burnin, pars_summary),
+       width = 20, height = 12)
+
+ggsave("figures/rankplots.pdf", rankplots(samples, burnin, pars_summary),
+       width = 20, height = 12)
+
+pars_summary <- pars_summary %>% select(!variable)
+saveRDS(pars_summary, "pars_summary.rds")

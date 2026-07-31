@@ -16,6 +16,7 @@ patchwork
 ggplot2
 glue
 posterior
+bayesplot
 stringr
 scales
 ggrastr
