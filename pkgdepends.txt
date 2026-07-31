@@ -3,7 +3,7 @@ repo::https://mrc-ide.r-universe.dev
 
 # Specific package versions
 mrc-ide/monty@mrc-6769
-mrc-ide/chronofix
+mrc-ide/chronofix@flatten-chains
 
 # CRAN
 orderly
@@ -16,6 +16,7 @@ patchwork
 ggplot2
 glue
 posterior
+bayesplot
 stringr
 scales
 ggrastr

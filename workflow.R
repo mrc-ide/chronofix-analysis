@@ -226,153 +226,153 @@ lognormal_delays <-
 hipercow_bundle_result(lognormal_delays)
 
 
-# Summarise ------------------------------------------------------------------
+# Collate ------------------------------------------------------------------
 
 resources <- hipercow_resources(cores = 32)
 
 ## Baseline
-baseline_summarise <- task_create_expr(
+baseline_collate <- task_create_expr(
   orderly::orderly_run(
-    "estim_summary",
+    "sim_collate",
     parameters = list(scenario = "baseline")),
   resources = resources
 )
-task_result(baseline_summarise)
+task_result(baseline_collate)
 
 ## No error
-no_error_summarise <- task_create_expr(
+no_error_collate <- task_create_expr(
   orderly::orderly_run(
-    "estim_summary",
+    "sim_collate",
     parameters = list(scenario = "no_error")),
   resources = resources
 )
-task_result(no_error_summarise)
+task_result(no_error_collate)
 
 ## No missing
-no_missing_summarise <- task_create_expr(
+no_missing_collate <- task_create_expr(
   orderly::orderly_run(
-    "estim_summary",
+    "sim_collate",
     parameters = list(scenario = "no_missing")),
   resources = resources
 )
-task_result(no_missing_summarise)
+task_result(no_missing_collate)
 
 ## No error and no missing
-no_error_no_missing_summarise <- task_create_expr(
+no_error_no_missing_collate <- task_create_expr(
   orderly::orderly_run(
-    "estim_summary",
+    "sim_collate",
     parameters = list(scenario = "no_error_no_missing")),
   resources = resources
 )
-task_result(no_error_no_missing_summarise)
+task_result(no_error_no_missing_collate)
 
 ## Low error
-low_error_summarise <- task_create_expr(
+low_error_collate <- task_create_expr(
   orderly::orderly_run(
-    "estim_summary",
+    "sim_collate",
     parameters = list(scenario = "low_error")),
   resources = resources
 )
-task_result(low_error_summarise)
+task_result(low_error_collate)
 
 ## High error
-high_error_summarise <- task_create_expr(
+high_error_collate <- task_create_expr(
   orderly::orderly_run(
-    "estim_summary",
+    "sim_collate",
     parameters = list(scenario = "high_error")),
   resources = resources
 )
-task_result(high_error_summarise)
+task_result(high_error_collate)
 
 ## Low missingness
-low_missingness_summarise <- task_create_expr(
+low_missingness_collate <- task_create_expr(
   orderly::orderly_run(
-    "estim_summary",
+    "sim_collate",
     parameters = list(scenario = "low_missingness")),
   resources = resources
 )
-task_result(low_missingness_summarise)
+task_result(low_missingness_collate)
 
 ## Very small sample
-very_small_sample_summarise <- task_create_expr(
+very_small_sample_collate <- task_create_expr(
   orderly::orderly_run(
-    "estim_summary",
+    "sim_collate",
     parameters = list(scenario = "very_small_sample")),
   resources = resources
 )
-task_result(very_small_sample_summarise)
+task_result(very_small_sample_collate)
 
 ## Small sample
-small_sample_summarise <- task_create_expr(
+small_sample_collate <- task_create_expr(
   orderly::orderly_run(
-    "estim_summary",
+    "sim_collate",
     parameters = list(scenario = "small_sample")),
   resources = resources
 )
-task_result(small_sample_summarise)
+task_result(small_sample_collate)
 
 ## Moderate sample
-moderate_sample_summarise <- task_create_expr(
+moderate_sample_collate <- task_create_expr(
   orderly::orderly_run(
-    "estim_summary",
+    "sim_collate",
     parameters = list(scenario = "moderate_sample")),
   resources = resources
 )
-task_result(moderate_sample_summarise)
+task_result(moderate_sample_collate)
 
 ## Very large sample
-very_large_sample_summarise <- task_create_expr(
+very_large_sample_collate <- task_create_expr(
   orderly::orderly_run(
-    "estim_summary",
+    "sim_collate",
     parameters = list(scenario = "very_large_sample")),
   resources = resources
 )
-task_result(very_large_sample_summarise)
+task_result(very_large_sample_collate)
 
 ## Long delays
-long_delays_summarise <- task_create_expr(
+long_delays_collate <- task_create_expr(
   orderly::orderly_run(
-    "estim_summary",
+    "sim_collate",
     parameters = list(scenario = "long_delays")),
   resources = resources
 )
-task_result(long_delays_summarise)
+task_result(long_delays_collate)
 
 ## Short delays
-short_delays_summarise <- task_create_expr(
+short_delays_collate <- task_create_expr(
   orderly::orderly_run(
-    "estim_summary",
+    "sim_collate",
     parameters = list(scenario = "short_delays")),
   resources = resources
 )
-task_result(short_delays_summarise)
+task_result(short_delays_collate)
 
 ## High variability
-high_variability_summarise <- task_create_expr(
+high_variability_collate <- task_create_expr(
   orderly::orderly_run(
-    "estim_summary",
+    "sim_collate",
     parameters = list(scenario = "high_variability")),
   resources = resources
 )
-task_result(high_variability_summarise)
+task_result(high_variability_collate)
 
 ## Low variability
-low_variability_summarise <- task_create_expr(
+low_variability_collate <- task_create_expr(
   orderly::orderly_run(
-    "estim_summary",
+    "sim_collate",
     parameters = list(scenario = "low_variability")),
   resources = resources
 )
-task_result(low_variability_summarise)
+task_result(low_variability_collate)
 
 ## Log-normal delays
-lognormal_delays_summarise <- task_create_expr(
+lognormal_delays_collate <- task_create_expr(
   orderly::orderly_run(
-    "estim_summary",
+    "sim_collate",
     parameters = list(scenario = "lognormal_delays")),
   resources = resources
 )
-task_result(lognormal_delays_summarise)
+task_result(lognormal_delays_collate)
 
 
 # Visualisations -------------------------------------------------------------
@@ -382,8 +382,8 @@ task_result(lognormal_delays_summarise)
 resources <- hipercow_resources(cores = 1)
 sanity <- task_create_expr(
   orderly::orderly_run(
-    "estim_diagnostics",
-    parameters = list(scenarios = "baseline,no_error,no_missing,no_error_no_missing")),
+    "sim_comparison",
+    parameters = list(comparison = "sanity")),
   resources = resources
 )
 
@@ -394,8 +394,8 @@ task_result(sanity)
 
 variable_error <- task_create_expr(
   orderly::orderly_run(
-    "estim_diagnostics",
-    parameters = list(scenarios = "baseline,low_error,high_error")),
+    "sim_comparison",
+    parameters = list(comparison = "variable_error")),
   resources = resources
 )
 
@@ -406,8 +406,8 @@ task_result(variable_error)
 
 variable_sample <- task_create_expr(
   orderly::orderly_run(
-    "estim_diagnostics",
-    parameters = list(scenarios = "baseline,very_small_sample,small_sample,moderate_sample,very_large_sample")),
+    "sim_comparison",
+    parameters = list(comparison = "variable_sample_size")),
   resources = resources
 )
 
@@ -419,8 +419,8 @@ task_result(variable_sample)
 
 variable_delays <- task_create_expr(
   orderly::orderly_run(
-    "estim_diagnostics",
-    parameters = list(scenarios = "baseline,long_delays,short_delays")),
+    "sim_comparison",
+    parameters = list(comparison = "variable_delay_length")),
   resources = resources
 )
 
@@ -431,8 +431,8 @@ task_result(variable_delays)
 
 variable_cv <- task_create_expr(
   orderly::orderly_run(
-    "estim_diagnostics",
-    parameters = list(scenarios = c("baseline,high_variability,low_variability"))),
+    "sim_comparison",
+    parameters = list(comparison = "variable_delay_cv")),
   resources = resources
 )
 
@@ -444,8 +444,8 @@ task_result(variable_cv)
 
 variable_distr <- task_create_expr(
   orderly::orderly_run(
-    "estim_diagnostics",
-    parameters = list(scenarios = c("baseline,lognormal_delays"))),
+    "sim_comparison",
+    parameters = list(comparison = "variable_delay_distribution")),
   resources = resources
 )
 
