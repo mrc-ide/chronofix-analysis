@@ -73,9 +73,9 @@ if (n_problem_traces > 0) {
     dataset <- as.integer(problem_traces$dataset[i])
     orderly_dependency(
       "sim_estim",
-      quote(usedby(latest(name == "sim_collate" && 
-                            parameter:scenario == environment:scenario)) &&
-              parameter:dataset == environment:dataset),
+      quote(latest(usedby(latest(
+        name == "sim_collate" && parameter:scenario == environment:scenario)) &&
+                     parameter:dataset == environment:dataset)),
       c("figures/problem_traces/${scenario}_${dataset}_traceplots.pdf" = 
           "figures/traceplots.pdf",
         "figures/problem_traces/${scenario}_${dataset}_rankplots.pdf" = 

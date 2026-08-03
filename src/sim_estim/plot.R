@@ -14,7 +14,7 @@ traceplots <- function(samples, burnin, pars_summary) {
   full_chains$pars <- abind::abind(full_chains$pars, full_chains$density, 
                                    along = 1)
   rownames(full_chains$pars)[nrow(full_chains$pars)] <- 
-    '"log posterior density"'
+    "log posterior density"
   
   samples_df <- posterior::as_draws_df(full_chains)
   
