@@ -11,7 +11,7 @@ library(tibble)
 library(dplyr)
 library(purrr)
 
-source("utils.R") # build_sim_params()
+source("support.R") # build_sim_params()
 
 # 1. setup date params
 ## baseline date params
