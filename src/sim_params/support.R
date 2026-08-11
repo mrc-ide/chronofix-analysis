@@ -7,10 +7,17 @@ build_date_params <- function(
                     "hospitalised-alive", "hospitalised-dead"),
     mean_scale = 1,
     cv_scale = 1,
-    delay_distribution = "gamma"
+    delay_distribution = "gamma",
+    same_means = FALSE
 ) {
   
   date_range <- as.integer(as.Date(c("2014-01-01", "2015-01-01")))
+  
+  if (same_means) {
+    base_means <- rep(7, 9)
+  } else {
+    base_means <- c(5, 6, 8, 11, 7, 9, 10, 12, 13)
+  }
   
   delay_info <- data.frame(
     from = c("onset", "onset", "onset", "onset", "onset", "onset",
@@ -21,7 +28,7 @@ build_date_params <- function(
               "hospitalised-dead", "community-dead", "hospitalised-alive",
               "hospitalised-alive", "hospitalised-dead", "hospitalised-dead"),
     distribution = delay_distribution,
-    mean = c(5, 6, 8, 11, 7, 9, 10, 12, 13),
+    mean = base_means,
     cv = c(0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5)
   )
   

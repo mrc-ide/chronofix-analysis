@@ -20,12 +20,14 @@ baseline_date_params <- tibble(
   group_size = 100,
   mean_scale = 1,
   cv_scale = 1,
-  delay_distribution = "gamma"
+  delay_distribution = "gamma",
+  same_means = FALSE
 )
 
 ## Create other date params by modifying the baseline
 date_params <- list(
   baseline = baseline_date_params,
+  same_means = baseline_date_params %>% mutate(same_means = TRUE),
   lognormal_delays = 
     baseline_date_params %>% mutate(delay_distribution = "log-normal"),
   very_small_sample = 
@@ -55,6 +57,7 @@ date_params <- lapply(
       mean_scale   = x$mean_scale,
       cv_scale     = x$cv_scale,
       delay_distribution = x$delay_distribution,
+      same_means  = x$same_means
     )
   }
 )
@@ -96,6 +99,8 @@ baseline_scenario <- tibble(
 # Create other simulation scenarios by modifying the baseline
 scenarios <- list(
   baseline = baseline_scenario,
+  same_means =
+    baseline_scenario %>% mutate(date_model = "same_means"),
   low_missingness = 
     baseline_scenario %>% mutate(error_model = "low_missingness"),
   no_missing = 
