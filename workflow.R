@@ -1,4 +1,5 @@
-#setwd("/Volumes/outbreak_analysis/rnash/datefixer-analysis")
+#setwd("/Volumes/chronofix/Rebecca/chronofix-analysis")
+#pak::pkg_install("mrc-ide/chronofix@flatten-chains")
 #pak::pkg_install("mrc-ide/chronofix@generate_linelist")
 #pak::pkg_install("mrc-ide/chronofix")
 #pak::pkg_install("mrc-ide/monty@mrc-6769")
@@ -7,12 +8,10 @@ library(orderly)
 library(hipercow)
 
 # orderly_location_fetch_metadata()
-# orderly_location_pull(task_id, location = "outbreak_analysis_network")
-
-orderly_location_fetch_metadata("outbreak_analysis_network")
+# orderly_location_pull(task_id, location = "chronofix_network")
+orderly_location_fetch_metadata("chronofix_network")
 
 hipercow_provision(method = "pkgdepends")
-resources <- hipercow_resources(cores = 32)
 
 # Create a named list containing the simulation parameters for all scenarios
 orderly_run("sim_params")
@@ -21,7 +20,7 @@ orderly_run("sim_params")
 sim100 <- task_create_expr(
   orderly::orderly_run("sim_data", parameters = list(nsims = 100)),
   parallel = hipercow_parallel("parallel"),
-  resources = resources
+  resources = hipercow::hipercow_resources(cores = 4)
 )
 
 task_status(sim100)
@@ -32,21 +31,22 @@ task_result(sim100)
 
 ## all simulation scenarios
 # "baseline" x
-# "low_missingness" x
-# "no_missing" x
-# "no_error" x
-# "no_error_no_missing" x
-# "low_error" x
-# "high_error" x
-# "very_small_sample" x
-# "small_sample" x
-# "moderate_sample" x
-# "very_large_sample" x
-# "long_delays" x
-# "short_delays" x
-# "high_variability" x
-# "low_variability" x
-# "lognormal_delays" x
+# "low_missingness"
+# "no_missing"
+# "no_error"
+# "no_error_no_missing"
+# "low_error"
+# "high_error"
+# "very_small_sample"
+# "small_sample"
+# "moderate_sample"
+# "very_large_sample"
+# "long_delays"
+# "short_delays"
+# "high_variability"
+# "low_variability"
+# "lognormal_delays"
+# "same_means" x
 
 baseline <- 
   hipercow::task_create_bulk_expr(
@@ -226,6 +226,16 @@ lognormal_delays <-
 hipercow_bundle_result(lognormal_delays)
 
 
+same_mean_delays <- 
+  hipercow::task_create_bulk_expr(
+    orderly::orderly_run("sim_estim",
+                         parameters = list(scenario = "same_means",
+                                           dataset = dataset)),
+    data.frame(dataset = seq_len(100)),
+    resources = hipercow::hipercow_resources(cores = 4))
+
+hipercow_bundle_result(same_mean_delays)
+
 # Collate ------------------------------------------------------------------
 
 resources <- hipercow_resources(cores = 32)
@@ -374,6 +384,15 @@ lognormal_delays_collate <- task_create_expr(
 )
 task_result(lognormal_delays_collate)
 
+## Same delay means
+same_mean_delays_collate <- task_create_expr(
+  orderly::orderly_run(
+    "sim_collate",
+    parameters = list(scenario = "same_means")),
+  resources = resources
+)
+task_result(same_mean_delays_collate)
+
 
 # Visualisations -------------------------------------------------------------
 
@@ -451,3 +470,15 @@ variable_distr <- task_create_expr(
 
 task_info(variable_distr)
 task_result(variable_distr)
+
+## variable delay means vs all delays with the same mean -----------------------
+
+same_delay_mean <- task_create_expr(
+  orderly::orderly_run(
+    "sim_comparison",
+    parameters = list(comparison = "same_means")),
+  resources = resources
+)
+
+task_info(same_delay_mean)
+task_result(same_delay_mean)
