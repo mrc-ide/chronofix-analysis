@@ -31,21 +31,21 @@ task_result(sim100)
 
 ## all simulation scenarios
 # "baseline" x
-# "low_missingness"
-# "no_missing"
-# "no_error"
-# "no_error_no_missing"
-# "low_error"
-# "high_error"
-# "very_small_sample"
-# "small_sample"
-# "moderate_sample"
-# "very_large_sample"
-# "long_delays"
-# "short_delays"
-# "high_variability"
-# "low_variability"
-# "lognormal_delays"
+# "low_missingness" x
+# "no_missing" x
+# "no_error" x
+# "no_error_no_missing" x
+# "low_error" x
+# "high_error" x
+# "very_small_sample" x
+# "small_sample" x
+# "moderate_sample" x
+# "very_large_sample" x
+# "long_delays" x
+# "short_delays" x
+# "high_variability" x
+# "low_variability" x
+# "lognormal_delays" x
 # "same_means" x
 
 baseline <- 
@@ -247,7 +247,7 @@ baseline_collate <- task_create_expr(
     parameters = list(scenario = "baseline")),
   resources = resources
 )
-task_result(baseline_collate)
+task_result(baseline_collate) # "20260811-200223-b6bef7da"
 
 ## No error
 no_error_collate <- task_create_expr(
@@ -256,7 +256,7 @@ no_error_collate <- task_create_expr(
     parameters = list(scenario = "no_error")),
   resources = resources
 )
-task_result(no_error_collate)
+task_result(no_error_collate) # "20260811-200438-6463464f"
 
 ## No missing
 no_missing_collate <- task_create_expr(
@@ -265,7 +265,7 @@ no_missing_collate <- task_create_expr(
     parameters = list(scenario = "no_missing")),
   resources = resources
 )
-task_result(no_missing_collate)
+task_result(no_missing_collate) # "20260811-200445-d157dd8e"
 
 ## No error and no missing
 no_error_no_missing_collate <- task_create_expr(
@@ -274,7 +274,7 @@ no_error_no_missing_collate <- task_create_expr(
     parameters = list(scenario = "no_error_no_missing")),
   resources = resources
 )
-task_result(no_error_no_missing_collate)
+task_result(no_error_no_missing_collate) # "20260811-200449-fc6eea18"
 
 ## Low error
 low_error_collate <- task_create_expr(
@@ -283,7 +283,7 @@ low_error_collate <- task_create_expr(
     parameters = list(scenario = "low_error")),
   resources = resources
 )
-task_result(low_error_collate)
+task_result(low_error_collate) # "20260811-200454-55881ab1"
 
 ## High error
 high_error_collate <- task_create_expr(
@@ -292,7 +292,7 @@ high_error_collate <- task_create_expr(
     parameters = list(scenario = "high_error")),
   resources = resources
 )
-task_result(high_error_collate)
+task_result(high_error_collate) # "20260811-200458-8a440dc2"
 
 ## Low missingness
 low_missingness_collate <- task_create_expr(
@@ -301,7 +301,7 @@ low_missingness_collate <- task_create_expr(
     parameters = list(scenario = "low_missingness")),
   resources = resources
 )
-task_result(low_missingness_collate)
+task_result(low_missingness_collate) # "20260811-200502-9a245270"
 
 ## Very small sample
 very_small_sample_collate <- task_create_expr(
@@ -310,7 +310,7 @@ very_small_sample_collate <- task_create_expr(
     parameters = list(scenario = "very_small_sample")),
   resources = resources
 )
-task_result(very_small_sample_collate)
+task_result(very_small_sample_collate) # "20260811-200506-fd1ca4e4"
 
 ## Small sample
 small_sample_collate <- task_create_expr(
@@ -319,7 +319,7 @@ small_sample_collate <- task_create_expr(
     parameters = list(scenario = "small_sample")),
   resources = resources
 )
-task_result(small_sample_collate)
+task_result(small_sample_collate) # "20260811-200511-0e5ade14"
 
 ## Moderate sample
 moderate_sample_collate <- task_create_expr(
@@ -328,7 +328,7 @@ moderate_sample_collate <- task_create_expr(
     parameters = list(scenario = "moderate_sample")),
   resources = resources
 )
-task_result(moderate_sample_collate)
+task_result(moderate_sample_collate) # "20260811-200516-3ca0939a"
 
 ## Very large sample
 very_large_sample_collate <- task_create_expr(
@@ -337,7 +337,7 @@ very_large_sample_collate <- task_create_expr(
     parameters = list(scenario = "very_large_sample")),
   resources = resources
 )
-task_result(very_large_sample_collate)
+task_result(very_large_sample_collate) # "20260811-200521-52855bfb"
 
 ## Long delays
 long_delays_collate <- task_create_expr(
@@ -346,7 +346,7 @@ long_delays_collate <- task_create_expr(
     parameters = list(scenario = "long_delays")),
   resources = resources
 )
-task_result(long_delays_collate)
+task_result(long_delays_collate) # "20260811-200526-1f866490"
 
 ## Short delays
 short_delays_collate <- task_create_expr(
@@ -355,7 +355,7 @@ short_delays_collate <- task_create_expr(
     parameters = list(scenario = "short_delays")),
   resources = resources
 )
-task_result(short_delays_collate)
+task_result(short_delays_collate) # "20260811-200530-19f1c1b8"
 
 ## High variability
 high_variability_collate <- task_create_expr(
@@ -364,7 +364,7 @@ high_variability_collate <- task_create_expr(
     parameters = list(scenario = "high_variability")),
   resources = resources
 )
-task_result(high_variability_collate)
+task_result(high_variability_collate) # "20260811-200536-a220dd07"
 
 ## Low variability
 low_variability_collate <- task_create_expr(
@@ -373,7 +373,7 @@ low_variability_collate <- task_create_expr(
     parameters = list(scenario = "low_variability")),
   resources = resources
 )
-task_result(low_variability_collate)
+task_result(low_variability_collate) # "20260811-200539-e9399c42"
 
 ## Log-normal delays
 lognormal_delays_collate <- task_create_expr(
@@ -382,7 +382,7 @@ lognormal_delays_collate <- task_create_expr(
     parameters = list(scenario = "lognormal_delays")),
   resources = resources
 )
-task_result(lognormal_delays_collate)
+task_result(lognormal_delays_collate) # "20260811-200544-cf86171e"
 
 ## Same delay means
 same_mean_delays_collate <- task_create_expr(
@@ -391,7 +391,7 @@ same_mean_delays_collate <- task_create_expr(
     parameters = list(scenario = "same_means")),
   resources = resources
 )
-task_result(same_mean_delays_collate)
+task_result(same_mean_delays_collate) # "20260811-200548-a27b2858"
 
 
 # Visualisations -------------------------------------------------------------
@@ -407,7 +407,7 @@ sanity <- task_create_expr(
 )
 
 task_info(sanity)
-task_result(sanity)
+task_result(sanity) # "20260811-200905-79a4a27d"
 
 ## variable error diagnostics -----------------------
 
@@ -419,7 +419,7 @@ variable_error <- task_create_expr(
 )
 
 task_info(variable_error)
-task_result(variable_error)
+task_result(variable_error) # "20260811-200910-e999c1d3"
 
 ## variable group sample size -----------------------
 
@@ -431,7 +431,7 @@ variable_sample <- task_create_expr(
 )
 
 task_info(variable_sample)
-task_result(variable_sample)
+task_result(variable_sample) # "20260811-200916-c38e53ce"
 
 
 ## variable delay diagnostics -----------------------
@@ -444,7 +444,7 @@ variable_delays <- task_create_expr(
 )
 
 task_info(variable_delays)
-task_result(variable_delays)
+task_result(variable_delays) # "20260811-200919-052a1fe2"
 
 ## variable cv -----------------------
 
@@ -456,7 +456,7 @@ variable_cv <- task_create_expr(
 )
 
 task_info(variable_cv)
-task_result(variable_cv)
+task_result(variable_cv) # "20260811-200924-ad009317"
 
 
 ## variable delay type -----------------------
@@ -469,16 +469,16 @@ variable_distr <- task_create_expr(
 )
 
 task_info(variable_distr)
-task_result(variable_distr)
+task_result(variable_distr) # "20260811-200930-de3d95be"
 
 ## variable delay means vs all delays with the same mean -----------------------
 
 same_delay_mean <- task_create_expr(
   orderly::orderly_run(
     "sim_comparison",
-    parameters = list(comparison = "same_means")),
+    parameters = list(comparison = "same_delay_means")),
   resources = resources
 )
 
 task_info(same_delay_mean)
-task_result(same_delay_mean)
+task_result(same_delay_mean) # "20260811-204247-bb25bb07"

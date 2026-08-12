@@ -6,7 +6,7 @@ comparison_scenarios <- list(
   variable_delay_length = c("baseline", "short_delays", "long_delays"),
   variable_delay_cv = c("baseline", "low_variability", "high_variability"),
   variable_delay_distribution = c("baseline", "lognormal_delays"),
-  same_delay_mean = c("baseline", "same_means")
+  same_delay_means = c("baseline", "same_means")
 )
 
 
