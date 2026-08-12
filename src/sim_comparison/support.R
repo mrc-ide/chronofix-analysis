@@ -5,7 +5,8 @@ comparison_scenarios <- list(
                            "moderate_sample", "very_large_sample"),
   variable_delay_length = c("baseline", "short_delays", "long_delays"),
   variable_delay_cv = c("baseline", "low_variability", "high_variability"),
-  variable_delay_distribution = c("baseline", "lognormal_delays")
+  variable_delay_distribution = c("baseline", "lognormal_delays"),
+  same_delay_means = c("baseline", "same_means")
 )
 
 
@@ -25,7 +26,8 @@ scenario_labels <- c(
   "very_large_sample" = "Very large groups (n = 500)",
   "long_delays" = "Long delays (2x baseline)",
   "high_variability" = "High variability (2x baseline cv)",
-  "lognormal_delays" = "Lognormal delays"
+  "lognormal_delays" = "Lognormal delays",
+  "same_means" = "Same mean delay (7 days)"
 )
 
 
