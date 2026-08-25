@@ -12,7 +12,7 @@ source("plot.R")
 orderly::orderly_shared_resource("util.R")
 source("util.R")
 
-version_check("chronofix", "0.0.6")
+version_check("chronofix", "0.0.8")
 
 orderly::orderly_artefact(description = "MCMC outputs", 
                           files = "samples.rds")
