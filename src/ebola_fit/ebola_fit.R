@@ -17,8 +17,8 @@ version_check("chronofix", "0.0.8")
 orderly::orderly_artefact(description = "MCMC outputs", 
                           files = "samples.rds")
 
-n_steps <- 10000
-burnin <- 5000
+n_steps <- 6000
+burnin <- 1000
 thinning_factor <- 20
 
 raw_data <- read.csv("rstb20160308supp1.csv")
