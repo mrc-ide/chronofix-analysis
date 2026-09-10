@@ -16,7 +16,8 @@ version_check("chronofix", "0.0.9")
 
 orderly::orderly_artefact(description = "MCMC outputs", 
                           files = c("outputs/samples.rds",
-                                    "outputs/data.rds"))
+                                    "outputs/data.rds",
+                                    "ouputs/delay_map.rds"))
 
 orderly::orderly_artefact(description = "MCMC plots", 
                           files = c("figures/traceplots.pdf",
@@ -43,6 +44,8 @@ delay_map <- delay_info <- data.frame(
             "hospitalised-alive", "hospitalised-dead", "hospitalised-dead"),
   distribution = "gamma"
 )
+
+saveRDS(data, "outputs/delay_map.rds")
 
 # MCMC settings ---------------------------------------------------------------
 
