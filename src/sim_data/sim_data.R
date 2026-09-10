@@ -6,7 +6,8 @@ library(orderly)
 library(chronofix)
 
 ## Number of data sets to simulate for each scenario
-pars <- orderly_parameters(nsims = NULL)
+pars <- orderly_parameters(scenario = "baseline",
+                           nsims = NULL)
 orderly_dependency("sim_params", "latest", 
                    files = c("date_params.rds",
                              "error_params.rds",
@@ -29,24 +30,20 @@ scenarios <- readRDS("scenarios.rds")
 
 set.seed(1)
 
-# Simulate true data
-
-true_data <- lapply(date_params, simulate_true_data, nsims = pars$nsims)
-
-for (nm_scenario in names(scenarios)) {
+date_params <- date_params[[scenarios[[scenario]]$date_model]]
+error_params <- error_params[[scenarios[[scenario]]$error_model]]
   
-  for (i in seq_len(pars$nsims)) {
-    filename <- paste0("outputs/sim_data", "_", nm_scenario, "_", i, ".rds")
-    orderly_artefact(description = "Simulated Data", 
-                     files = filename)
-    
-    scenario <- scenarios[[nm_scenario]]
-    
-    res <- chronofix_simulate_observation_errors(
-      true_data[[scenario$date_model]][[i]],
-      error_params[[scenario$error_model]],
-      date_params[[scenario$date_model]]$date_range
-    )
-    saveRDS(res, filename)
-  }
+## simulate true data
+true_data <- simulate_true_data(date_params, nsims = pars$nsims)
+  
+## simulate errors
+for (i in seq_len(pars$nsims)) {
+  filename <- paste0("outputs/sim_data_", i, ".rds")
+  orderly_artefact(description = "Simulated Data", 
+                   files = filename)
+  
+  res <- chronofix_simulate_observation_errors(
+    true_data[[i]], error_params, date_params$date_range
+  )
+  saveRDS(res, filename)
 }
