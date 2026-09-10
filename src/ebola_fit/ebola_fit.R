@@ -12,17 +12,27 @@ source("plot.R")
 orderly::orderly_shared_resource("util.R")
 source("util.R")
 
-version_check("chronofix", "0.0.8")
+version_check("chronofix", "0.0.9")
 
 orderly::orderly_artefact(description = "MCMC outputs", 
-                          files = "samples.rds")
+                          files = c("outputs/samples.rds",
+                                    "outputs/data.rds",
+                                    "ouputs/delay_map.rds"))
 
-n_steps <- 6000
+orderly::orderly_artefact(description = "MCMC plots", 
+                          files = c("figures/traceplots.pdf",
+                                    "figures/rankplots.pdf"))
+
+
+n_steps <- 3000
 burnin <- 1000
-thinning_factor <- 20
+thinning_factor <- 8
 
 raw_data <- read.csv("rstb20160308supp1.csv")
 data <- prepare_data(raw_data)
+
+dir.create("outputs", showWarnings = FALSE)
+saveRDS(data, "outputs/data.rds")
 
 delay_map <- delay_info <- data.frame(
   from = c("onset", "onset", "onset", "onset", "onset", "onset",
@@ -34,6 +44,8 @@ delay_map <- delay_info <- data.frame(
             "hospitalised-alive", "hospitalised-dead", "hospitalised-dead"),
   distribution = "gamma"
 )
+
+saveRDS(data, "outputs/delay_map.rds")
 
 # MCMC settings ---------------------------------------------------------------
 
@@ -59,7 +71,7 @@ hyperparameters <- chronofix_hyperparameters(
 
 model <- chronofix_model(data, delay_map, hyperparameters, control)
 samples <- chronofix_mcmc_run(model, sampler, control = control)
-saveRDS(samples, "samples.rds")
+saveRDS(samples, "outputs/samples.rds")
 
 pars_summary <- summarise_pars(samples, delay_map)
 
