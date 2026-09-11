@@ -17,7 +17,8 @@ version_check("chronofix", "0.0.9")
 orderly::orderly_artefact(description = "MCMC outputs", 
                           files = c("outputs/samples.rds",
                                     "outputs/data.rds",
-                                    "ouputs/delay_map.rds"))
+                                    "outputs/delay_map.rds",
+                                    "outputs/pars_summary.rds"))
 
 orderly::orderly_artefact(description = "MCMC plots", 
                           files = c("figures/traceplots.pdf",
@@ -84,4 +85,4 @@ ggsave("figures/rankplots.pdf", rankplots(samples, burnin, pars_summary),
        width = 20, height = 12)
 
 pars_summary <- pars_summary %>% select(!variable)
-saveRDS(pars_summary, "pars_summary.rds")
+saveRDS(pars_summary, "outputs/pars_summary.rds")

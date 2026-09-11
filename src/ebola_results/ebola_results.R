@@ -9,6 +9,7 @@ version_check("chronofix", "0.0.9")
 
 orderly_dependency("ebola_fit", "latest", 
                    files = c("inputs/samples.rds" = "outputs/samples.rds",
+                             "inputs/pars_summary.rds" = "outputs/pars_summary.rds",
                              "inputs/data.rds" = "outputs/data.rds",
                              "inputs/delay_map.rds" = "outputs/delay_map.rds"))
 
@@ -20,6 +21,7 @@ orderly_artefact(description = "figures",
 
 samples <- readRDS("inputs/samples.rds")
 data <- readRDS("inputs/data.rds")
+pars_summary <- readRDS("inputs/pars_summary.rds")
 
 dir.create("outputs", showWarnings = FALSE)
 chronofix::chronofix_linelist(samples, data, 
