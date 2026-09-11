@@ -2,7 +2,7 @@ summarise_pars <- function(samples, delay_info, true_prob_error) {
   samples$data <- NULL
   samples_df <- posterior::as_draws_df(samples)
   
-  # calculate mean and CV and 95th percentile for every individual posterior sample
+  # calculate mean and CV and 95th quantile for every individual posterior sample
   for (i in seq_len(nrow(delay_info))) {
     dist <- delay_info$distribution[i]
     
@@ -10,14 +10,14 @@ summarise_pars <- function(samples, delay_info, true_prob_error) {
       mean_col <- paste0("delay", i, "_mean")
       shape_col <- paste0("delay", i, "_shape")
       cv_col <- paste0("delay", i, "_cv")
-      p95_col <- paste0("delay", i, "_p95")
+      q95_col <- paste0("delay", i, "_q95")
       
       # gamma CV = 1 / sqrt(shape)
       samples_df[[cv_col]] <- 1 / sqrt(samples_df[[shape_col]])
       
-      # gamma 95th percentile
+      # gamma 95th quantile
       scale_vec <- samples_df[[mean_col]] / samples_df[[shape_col]]
-      samples_df[[p95_col]] <- stats::qgamma(0.95, 
+      samples_df[[q95_col]] <- stats::qgamma(0.95, 
                                              shape = samples_df[[shape_col]], 
                                              scale = scale_vec)
       
@@ -26,7 +26,7 @@ summarise_pars <- function(samples, delay_info, true_prob_error) {
       pr_col <- paste0("delay", i, "_precisionlog")
       mean_col <- paste0("delay", i, "_mean")
       cv_col <- paste0("delay", i, "_cv")
-      p95_col <- paste0("delay", i, "_p95")
+      q95_col <- paste0("delay", i, "_q95")
       
       mu <- samples_df[[ml_col]]
       tau <- samples_df[[pr_col]]
@@ -35,9 +35,9 @@ summarise_pars <- function(samples, delay_info, true_prob_error) {
       samples_df[[mean_col]] <- exp(mu + 1 / (2 * tau))
       # lognormal CV = sqrt(exp(1 / tau) - 1)
       samples_df[[cv_col]]   <- sqrt(exp(1 / tau) - 1)
-      # lognormal 95th percentile
+      # lognormal 95th quantile
       sdlog_vec <- sqrt(1 / tau)
-      samples_df[[p95_col]] <- stats::qlnorm(0.95, 
+      samples_df[[q95_col]] <- stats::qlnorm(0.95, 
                                              meanlog = mu, 
                                              sdlog = sdlog_vec)
     }
@@ -62,18 +62,18 @@ summarise_pars <- function(samples, delay_info, true_prob_error) {
     if (delay_info$distribution[i] == "gamma") {
       true_shape <- 1 / true_cv^2
       true_scale <- true_mean / true_shape
-      true_p95 <- stats::qgamma(0.95, shape = true_shape, scale = true_scale)
-      par <- c("mean", "shape", "cv", "p95")
-      true_value <- c(true_mean, true_shape, true_cv, true_p95)
+      true_q95 <- stats::qgamma(0.95, shape = true_shape, scale = true_scale)
+      par <- c("mean", "shape", "cv", "q95")
+      true_value <- c(true_mean, true_shape, true_cv, true_q95)
       
     } else if (delay_info$distribution[i] == "log-normal") {
       true_precisionlog <- 1 / log(true_cv^2 + 1)
       true_meanlog <- log(true_mean) - 1 / (2 * true_precisionlog)
       true_sdlog <- sqrt(1 / true_precisionlog)
-      true_p95 <- stats::qlnorm(0.95, meanlog = true_meanlog, sdlog = true_sdlog)
+      true_q95 <- stats::qlnorm(0.95, meanlog = true_meanlog, sdlog = true_sdlog)
       
-      par <- c("meanlog", "precisionlog", "mean", "cv", "p95")
-      true_value <- c(true_meanlog, true_precisionlog, true_mean, true_cv, true_p95)
+      par <- c("meanlog", "precisionlog", "mean", "cv", "q95")
+      true_value <- c(true_meanlog, true_precisionlog, true_mean, true_cv, true_q95)
     }
     
     delay <- paste0(delay_info$from[i], " to ", delay_info$to[i])
