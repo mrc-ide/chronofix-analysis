@@ -1,6 +1,34 @@
 summarise_pars <- function(samples, delay_info, true_prob_error) {
   samples$data <- NULL
   samples_df <- posterior::as_draws_df(samples)
+  
+  # calculate mean and CV for every individual posterior sample
+  for (i in seq_len(nrow(delay_info))) {
+    dist <- delay_info$distribution[i]
+    
+    if (dist == "gamma") {
+      shape_col <- paste0("delay", i, "_shape")
+      cv_col <- paste0("delay", i, "_cv")
+      
+      # gamma CV = 1 / sqrt(shape)
+      samples_df[[cv_col]] <- 1 / sqrt(samples_df[[shape_col]])
+      
+    } else if (dist == "log-normal") {
+      ml_col <- paste0("delay", i, "_meanlog")
+      pr_col <- paste0("delay", i, "_precisionlog")
+      mean_col <- paste0("delay", i, "_mean")
+      cv_col <- paste0("delay", i, "_cv")
+      
+      mu <- samples_df[[ml_col]]
+      tau <- samples_df[[pr_col]]
+      
+      # lognormal mean = exp(mu + 1 / (2 * tau))
+      samples_df[[mean_col]] <- exp(mu + 1 / (2 * tau))
+      # lognormal CV = sqrt(exp(1 / tau) - 1)
+      samples_df[[cv_col]]   <- sqrt(exp(1 / tau) - 1)
+    }
+  }
+  
   p_quantile <- c(0.025, 0.25, 0.75, 0.975)
   summary <- 
     posterior::summarise_draws(samples_df, mean, median, sd, 
@@ -16,16 +44,21 @@ summarise_pars <- function(samples, delay_info, true_prob_error) {
   get_delay_info_i <- function(i) {
     true_mean <- delay_info$mean[i]
     true_cv <- delay_info$cv[i]
+    
     if (delay_info$distribution[i] == "gamma") {
-      par <- c("mean", "shape")
       true_shape <- 1 / true_cv^2
-      true_value <- c(true_mean, true_shape)
+      
+      par <- c("mean", "shape", "cv")
+      true_value <- c(true_mean, true_shape, true_cv)
+      
     } else if (delay_info$distribution[i] == "log-normal") {
-      par <- c("meanlog", "precisionlog")
       true_precisionlog <- 1 / log(true_cv^2 + 1)
       true_meanlog <- log(true_mean) - 1 / (2 * true_precisionlog)
-      true_value <- c(true_meanlog, true_precisionlog)
-    } 
+      
+      par <- c("meanlog", "precisionlog", "mean", "cv")
+      true_value <- c(true_meanlog, true_precisionlog, true_mean, true_cv)
+    }
+    
     delay <- paste0(delay_info$from[i], " to ", delay_info$to[i])
     group <- delay_info$group[i]
     
