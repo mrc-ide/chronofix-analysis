@@ -1,4 +1,6 @@
 library(chronofix)
+library(orderly)
+library(ggplot2)
 
 orderly::orderly_shared_resource("util.R")
 source("util.R")
