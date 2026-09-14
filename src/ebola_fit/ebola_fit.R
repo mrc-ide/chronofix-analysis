@@ -17,6 +17,7 @@ version_check("chronofix", "0.0.9")
 orderly::orderly_artefact(description = "MCMC outputs", 
                           files = c("outputs/samples.rds",
                                     "outputs/data.rds",
+                                    "outputs/data_with_onset_inferred.rds",
                                     "outputs/delay_map.rds",
                                     "outputs/pars_summary.rds"))
 
@@ -31,9 +32,11 @@ thinning_factor <- 8
 
 raw_data <- read.csv("rstb20160308supp1.csv")
 data <- prepare_data(raw_data)
+data_with_onset_inferred <- prepare_data(raw_data, onset_inferred = TRUE)
 
 dir.create("outputs", showWarnings = FALSE)
 saveRDS(data, "outputs/data.rds")
+saveRDS(data_with_onset_inferred, "outputs/data_with_onset_inferred.rds")
 
 delay_map <- delay_info <- data.frame(
   from = c("onset", "onset", "onset", "onset", "onset", "onset",
