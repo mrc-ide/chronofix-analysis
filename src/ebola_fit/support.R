@@ -1,6 +1,6 @@
-filter_data <- function(data, onset_inferred = FALSE) {
+filter_data <- function(data) {
   data$row_id <- seq_len(nrow(data))
-  ret <- data %>% 
+  data %>% 
     filter(EpiCaseDef == "confirmed") %>%
     filter(!is.na(FinalStatus)) %>%
     filter(!retrospective) %>%
@@ -11,7 +11,6 @@ filter_data <- function(data, onset_inferred = FALSE) {
       FinalStatus == "Alive" & HospitalizedEver == "No" ~ "community-alive",
       FinalStatus == "Dead" & HospitalizedEver == "No" ~ "community-dead")) %>%
     mutate(onset = DateOnset,
-           onset_inferred = DateOnsetInferred,
            report = DateReport,
            hospitalisation = DateHospitalCurrentAdmit,
            discharge = case_when(
@@ -21,14 +20,8 @@ filter_data <- function(data, onset_inferred = FALSE) {
                              FinalStatus != "Dead" ~ NA)) %>%
     filter(!(is.na(onset) & is.na(report) & is.na(hospitalisation) & 
                is.na(discharge) & is.na(death))) %>%
-    select(row_id, group, onset, onset_inferred, report, 
+    select(row_id, group, onset, report, 
            hospitalisation, discharge, death)
-  
-  if (!onset_inferred) {
-    ret <- ret %>% select(!onset_inferred)
-  }
-  
-  ret
 }
 
 
