@@ -1,5 +1,5 @@
-prepare_data <- function(data) {
-  data$id <- seq_len(nrow(data))
+filter_data <- function(data) {
+  data$row_id <- seq_len(nrow(data))
   data %>% 
     filter(EpiCaseDef == "confirmed") %>%
     filter(!is.na(FinalStatus)) %>%
@@ -20,7 +20,8 @@ prepare_data <- function(data) {
                              FinalStatus != "Dead" ~ NA)) %>%
     filter(!(is.na(onset) & is.na(report) & is.na(hospitalisation) & 
                is.na(discharge) & is.na(death))) %>%
-    select(id, group, onset, report, hospitalisation, discharge, death)
+    select(row_id, group, onset, report, 
+           hospitalisation, discharge, death)
 }
 
 
