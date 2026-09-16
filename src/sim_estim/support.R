@@ -145,9 +145,13 @@ summarise_errors <- function(samples, data) {
                    values_to = "data_error") %>%
       right_join(df_sample_errors) %>%
       group_by(group, event) %>%
-      summarise(n_true_errors_flagged = sum(sample_error & data_error, 
-                                            na.rm = TRUE),
-                n_true_errors = sum(data_error, na.rm = TRUE)) %>%
+      summarise(
+        n_true_errors_flagged = sum(sample_error & data_error, na.rm = TRUE),
+        n_true_errors = sum(data_error, na.rm = TRUE),
+        n_false_positives = sum(sample_error & !data_error, na.rm = TRUE),
+        n_true_non_errors = sum(!data_error, na.rm = TRUE),
+        .groups = "drop"
+      ) %>%
       mutate(threshold = threshold) %>%
       relocate(threshold, .after = event)
   }
