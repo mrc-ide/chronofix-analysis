@@ -18,7 +18,7 @@ source("support.R")
 source("plot.R")
 source("util.R")
 
-version_check("chronofix", "0.0.9")
+version_check("chronofix", "0.0.10")
 
 scenario <- pars$scenario
 dataset <- pars$dataset
@@ -63,7 +63,6 @@ control <- chronofix_mcmc_control(n_steps = n_steps,
                                   cascade_sampling = TRUE,
                                   prob_update_estimated_dates = 1,
                                   prob_update_error_indicators = 1)
-sampler <- chronofix_sampler(control)
 hyperparameters <- chronofix_hyperparameters(
   gamma_shape_prior_shape = 1,
   gamma_shape_prior_rate = 0.1,
@@ -77,9 +76,8 @@ date_model <- scenarios[[scenario]]$date_model
 error_model <- scenarios[[scenario]]$error_model
 delay_info <- date_params[[date_model]]$delay_info
 
-model <- chronofix_model(sim_data$observed_data, delay_info,
-                         hyperparameters, control)
-samples <- chronofix_mcmc_run(model, sampler, control = control)
+samples <- chronofix_mcmc(sim_data$observed_data, delay_info,
+                          hyperparameters, control = control)
 saveRDS(samples, "sim_estim.rds")
 
 
