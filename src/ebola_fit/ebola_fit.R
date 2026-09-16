@@ -12,7 +12,7 @@ source("plot.R")
 orderly::orderly_shared_resource("util.R")
 source("util.R")
 
-version_check("chronofix", "0.0.9")
+version_check("chronofix", "0.0.10")
 
 orderly::orderly_artefact(description = "MCMC outputs", 
                           files = c("outputs/samples.rds",
@@ -31,8 +31,12 @@ burnin <- 1000
 thinning_factor <- 8
 
 raw_data <- read.csv("rstb20160308supp1.csv")
-data <- prepare_data(raw_data)
-data_with_onset_inferred <- prepare_data(raw_data, onset_inferred = TRUE)
+
+data <- filter_data(raw_data)
+data <- chronofix_prepare_data(data, id = "row_id")
+data_with_onset_inferred <- filter_data(raw_data, onset_inferred = TRUE)
+data_with_onset_inferred <- 
+  chronofix_prepare_data(data_with_onset_inferred, id = "row_id")
 
 dir.create("outputs", showWarnings = FALSE)
 saveRDS(data, "outputs/data.rds")
@@ -63,7 +67,7 @@ control <- chronofix_mcmc_control(n_steps = n_steps,
                                   cascade_sampling = TRUE,
                                   prob_update_estimated_dates = 1,
                                   prob_update_error_indicators = 1)
-sampler <- chronofix_sampler(control)
+
 hyperparameters <- chronofix_hyperparameters(
   gamma_shape_prior_shape = 1,
   gamma_shape_prior_rate = 0.1,
@@ -73,9 +77,8 @@ hyperparameters <- chronofix_hyperparameters(
 
 # Run MCMC -------------------------------------------------------------------
 
-model <- chronofix_model(data, delay_map, hyperparameters, control)
-samples <- chronofix_mcmc_run(model, sampler, control = control)
-saveRDS(samples, "outputs/samples.rds")
+samples <- chronofix_mcmc(data, delay_map, hyperparameters, control = control)
+saveRDS(samples, "samples.rds")
 
 pars_summary <- summarise_pars(samples, delay_map)
 

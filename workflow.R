@@ -16,37 +16,36 @@ hipercow_provision(method = "pkgdepends")
 # Create a named list containing the simulation parameters for all scenarios
 orderly_run("sim_params")
 
-# Simulate data for all scenarios
-sim100 <- task_create_expr(
-  orderly::orderly_run("sim_data", parameters = list(nsims = 100)),
-  parallel = hipercow_parallel("parallel"),
-  resources = hipercow::hipercow_resources(cores = 4)
-)
+## all simulation scenarios
+scenarios <- c("baseline",
+               "low_missingness",
+               "no_missing",
+               "no_error",
+               "no_error_no_missing",
+               "low_error",
+               "high_error",
+               "very_small_sample",
+               "small_sample",
+               "moderate_sample",
+               "very_large_sample",
+               "long_delays",
+               "short_delays",
+               "high_variability",
+               "low_variability",
+               "lognormal_delays",
+               "same_means")
 
-task_status(sim100)
-task_info(sim100)
-task_result(sim100)
+# Simulate data for all scenarios
+sim100 <- hipercow::task_create_bulk_expr(
+  orderly::orderly_run("sim_data",
+                       parameters = list(scenario = scenario,
+                                         nsims = 100)),
+  data.frame(scenario = scenarios),
+  resources = hipercow::hipercow_resources(cores = 1))
+
+hipercow_bundle_result(sim100)
 
 # MCMC output -----------------------------------------------------------------
-
-## all simulation scenarios
-# "baseline" x
-# "low_missingness" x
-# "no_missing" x
-# "no_error" x
-# "no_error_no_missing" x
-# "low_error" x
-# "high_error" x
-# "very_small_sample" x
-# "small_sample" x
-# "moderate_sample" x
-# "very_large_sample" x
-# "long_delays" x
-# "short_delays" x
-# "high_variability" x
-# "low_variability" x
-# "lognormal_delays" x
-# "same_means" x
 
 baseline <- 
   hipercow::task_create_bulk_expr(
