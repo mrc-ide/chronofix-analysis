@@ -8,6 +8,8 @@ plot_ess <- function(pars_summary, ess_threshold) {
     geom_hline(yintercept = ess_threshold, linetype = "dashed", 
                colour = "black", linewidth = 0.8) +
     facet_wrap(~par_label, scales = "free_y") +
+    scale_colour_manual(values = scenario_colours, drop = FALSE) +
+    scale_fill_manual(values = scenario_colours, drop = FALSE) +
     labs(
       title = "Distribution of effective sample size across simulations",
       subtitle = paste0("Black line = threshold of ", ess_threshold),
@@ -32,9 +34,9 @@ plot_event_sensitivity <- function(errors_summary) {
     summarise(pct_accuracy = 
                 sum(n_true_errors_flagged) / sum(n_true_errors) * 100) %>%
     filter(!is.na(pct_accuracy)) %>%
-    mutate(event = factor(event, levels = c("onset", "report",
-                                            "hospitalisation",
-                                            "discharge", "death"))) %>%
+    mutate(
+      event = factor(event, levels = global_event_levels, labels = global_event_labels)
+    ) %>%
     ggplot(aes(x = event, y = group, fill = pct_accuracy)) +
     geom_tile(colour = "white", linewidth = 0.5) +
     geom_text(aes(label = sprintf("%.0f", pct_accuracy)),
@@ -63,26 +65,34 @@ plot_indiv_sensitivity <- function(errors_summary) {
     # Filter out scenarios that have no true errors simulated
     filter(!scenario %in% c("Missing dates only (0.2)", 
                             "No errors or missing dates")) %>%
+    mutate(scenario = factor(scenario, 
+                             levels = setdiff(levels(scenario), 
+                                              c("Missing dates only (0.2)", 
+                                                "No errors or missing dates")))) %>%
     mutate(threshold = paste0(as.character(threshold * 100), "% Threshold")) %>%
     mutate(accuracy = n_true_errors_flagged / n_true_errors) %>%
     filter(!is.na(accuracy)) %>%
-    ggplot(aes(x = accuracy, y = group)) +
-    geom_boxplot(fill = "dodgerblue", alpha = 0.5, 
-                 width = 0.7, outlier.size = 1) +
-    facet_grid(threshold ~ scenario) +
-    scale_x_continuous(limits = c(0, 1)) +
+    ggplot(aes(x = accuracy, y = group, fill = scenario, colour = scenario)) +
+    geom_boxplot(alpha = 0.8, width = 0.7, outlier.size = 1,
+                 position = position_dodge2(reverse = TRUE, padding = 0.1)) +
+    facet_grid(threshold ~ .) +
+    scale_x_continuous(limits = c(0, 1), labels = scales::percent) +
     scale_y_discrete(drop = FALSE, limits = rev) +
+    scale_fill_manual(values = scenario_colours, drop = FALSE) +
+    scale_colour_manual(values = scenario_colours, drop = FALSE) +
     labs(
       title = "Individual-level Sensitivity",
       subtitle = 
         "Distribution across simulations (individuals with >= 2 recorded dates)",
-      y = "Group",
-      x = "Sensitivity") +
+      y = "",
+      x = "Sensitivity (True Positive Rate)",
+      fill = "Scenario") +
     theme_bw() +
     theme(strip.text = element_text(size = 9, face = "bold"),
           panel.border = element_rect(colour = "darkgrey", 
                                       fill = NA, linewidth = 1),
-          legend.position = "none")
+          legend.position = "right") +
+    guides(fill = guide_legend(ncol = 1), colour = "none")
 }
 
 
@@ -119,6 +129,7 @@ plot_coverage <- function(pars_summary) {
     geom_hline(yintercept = 0.50, linetype = "dashed",
                colour = "lightseagreen", alpha = 0.8) +
     facet_wrap(~par_label) +
+    scale_colour_manual(values = scenario_colours, drop = FALSE) +
     labs(title = "Coverage of Credible Intervals",
          subtitle = "True parameters (ground truth). Error bars: 95% binomial confidence intervals",
          y = "Coverage Probability",
@@ -152,6 +163,7 @@ plot_bias <- function(pars_summary) {
                       ymax = bias_avg + bias_sd), 
                   width = 0.3) +
     facet_wrap(~par_label, scales = "free_y") +
+    scale_colour_manual(values = scenario_colours, drop = FALSE) +
     labs(title = "Median Bias of Delay Parameters (+/- SD)",
          subtitle = "Compared to Ground Truth",
          y = "Median Bias",
@@ -191,6 +203,7 @@ plot_posterior_delays <- function(pars_summary) {
                aes(xintercept = true_value, colour = scenario),
                linetype = "dashed", linewidth = 0.8) +
     facet_wrap(~par_label, scales = "free") +
+    scale_colour_manual(values = scenario_colours, drop = FALSE) +
     labs(title = "Posterior Distributions: mean",
          subtitle = "Dashed line = true value. Densities across all simulations.",
          x = "Mean", y = "Density", colour = "Scenario") +
@@ -212,6 +225,8 @@ plot_posterior_prob_error <- function(pars_summary) {
     facet_wrap(~scenario, scales = "free_y", nrow = 1) +
     scale_x_continuous(expand = c(0.005, 0), limits = c(0, NA)) +
     scale_y_continuous(expand = c(0, 0.05)) +
+    scale_colour_manual(values = scenario_colours, drop = FALSE) +
+    scale_fill_manual(values = scenario_colours, drop = FALSE) +
     labs(title = "Posterior Distributions: Probability of Error",
          subtitle = "Dashed line = true value. Densities across all simulations.",
          x = "Probability of Error", y = "Density",
@@ -222,4 +237,191 @@ plot_posterior_prob_error <- function(pars_summary) {
           panel.border = element_rect(colour = "darkgrey", fill = NA, linewidth = 1),
           axis.title.x = element_text(margin = margin(t = 10)),
           axis.title.y = element_text(margin = margin(r = 10)))
+}
+
+
+plot_coverage_by_group <- function(pars_summary) {
+  
+  coverage_data <- pars_summary %>%
+    add_par_roles() %>%
+    filter(!is.na(true_value), !is.na(role)) %>%
+    group_by(scenario, group, delay, role) %>%
+    summarise(
+      n_sims = sum(!is.na(q2.5) & !is.na(q97.5)),
+      `50% CrI` = sum(q25  <= true_value & true_value <= q75,   na.rm = TRUE),
+      `95% CrI` = sum(q2.5 <= true_value & true_value <= q97.5, na.rm = TRUE),
+      .groups = "drop") %>%
+    filter(n_sims > 0) %>%
+    pivot_longer(c(`50% CrI`, `95% CrI`),
+                 names_to = "interval", values_to = "n_success") %>%
+    rowwise() %>%
+    mutate(coverage = n_success / n_sims,
+           ci_lower = binom.test(n_success, n_sims)$conf.int[1],
+           ci_upper = binom.test(n_success, n_sims)$conf.int[2]) %>%
+    ungroup() %>%
+    mutate(
+      delay = factor(as.character(delay), levels = global_delay_levels, labels = global_delay_labels),
+      panel_title = sprintf("<span style='color: #1F77B4;'>%s</span><br>%s", group, role)
+    ) %>%
+    arrange(group, role) %>%
+    mutate(panel_title = factor(panel_title, levels = unique(panel_title)))
+  
+  ggplot(coverage_data,
+         aes(x = delay, y = coverage, colour = scenario)) +
+    geom_hline(yintercept = 0.95, linetype = "dashed",
+               colour = "seagreen", alpha = 0.8) +
+    geom_hline(yintercept = 0.50, linetype = "dashed",
+               colour = "lightseagreen", alpha = 0.8) +
+    geom_pointrange(aes(ymin = ci_lower, ymax = ci_upper),
+                    position = position_dodge(width = 0.75),
+                    size = 0.3, fatten = 2.2, alpha = 0.85) +
+    facet_wrap(group ~ role, ncol = 2, scales = "free_x") +
+    scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
+    scale_x_discrete(labels = scales::label_wrap(18),
+                     expand = expansion(add = 0.4)) +
+    scale_colour_manual(values = scenario_colours, drop = FALSE) +
+    labs(title = "Coverage of Credible Intervals",
+         subtitle = paste("True parameters (ground truth).",
+                          "Error bars: 95% binomial confidence intervals"),
+         x = NULL, y = "Coverage Probability",
+         colour = "Scenario") +
+    theme_minimal() +
+    theme(strip.text = element_text(size = 9, face = "bold"),
+          legend.position = "right",
+          legend.key.height = unit(0.8, "lines"),
+          panel.border = element_rect(colour = "darkgrey", fill = NA,
+                                      linewidth = 1),
+          panel.grid.minor = element_blank(),
+          axis.title.y = element_text(margin = margin(r = 10))) +
+    guides(colour = guide_legend(ncol = 1, order = 1))
+}
+
+plot_performance_figure <- function(pars_summary, target_role = "Mean") {
+
+  plot_data_raw <- pars_summary %>%
+    add_par_roles() %>%
+    filter(!is.na(true_value), !is.na(role), role == target_role) %>%
+    mutate(sim_rel_bias = (median - true_value) / true_value) %>%
+    group_by(scenario, group, delay, role) %>%
+    summarise(
+      n_sims = sum(!is.na(q2.5) & !is.na(q97.5)),
+      cov_50_n = sum(q25 <= true_value & true_value <= q75, na.rm = TRUE),
+      cov_95_n = sum(q2.5 <= true_value & true_value <= q97.5, na.rm = TRUE),
+      bias_median = median(sim_rel_bias, na.rm = TRUE),
+      bias_low = quantile(sim_rel_bias, 0.025, na.rm = TRUE),
+      bias_high = quantile(sim_rel_bias, 0.975, na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    filter(n_sims > 0) %>%
+    rowwise() %>%
+    mutate(
+      cov_50 = cov_50_n / n_sims,
+      cov_95 = cov_95_n / n_sims,
+      cov_50_lower = binom.test(cov_50_n, n_sims)$conf.int[1],
+      cov_50_upper = binom.test(cov_50_n, n_sims)$conf.int[2],
+      cov_95_lower = binom.test(cov_95_n, n_sims)$conf.int[1],
+      cov_95_upper = binom.test(cov_95_n, n_sims)$conf.int[2]
+    ) %>%
+    ungroup()
+
+  # maximum number of delays in any single group
+  delay_counts <- plot_data_raw %>% distinct(group, delay) %>% count(group)
+  max_delays <- max(delay_counts$n, na.rm = TRUE)
+
+  # groups that need padding to match max_delays
+  dummy_groups <- delay_counts %>% filter(n < max_delays)
+
+  if (nrow(dummy_groups) > 0) {
+    dummy_rows <- dummy_groups %>%
+      rowwise() %>%
+      mutate(delay = list(strrep(" ", 1:(max_delays - n)))) %>%
+      unnest(delay) %>%
+      mutate(scenario = plot_data_raw$scenario[1]) %>%
+      select(group, delay, scenario) %>%
+      ungroup()
+
+    plot_data <- bind_rows(plot_data_raw, dummy_rows)
+  } else {
+    plot_data <- plot_data_raw
+  }
+
+  dummy_levels <- strrep(" ", 1:max_delays)
+
+  plot_data <- plot_data %>%
+    mutate(
+      delay = factor(as.character(delay),
+                     levels = c(global_delay_levels, dummy_levels),
+                     labels = c(global_delay_labels, dummy_levels))
+    )
+
+  cov_data <- plot_data %>%
+    select(scenario, group, delay, cov_50, cov_95,
+           cov_50_lower, cov_50_upper, cov_95_lower, cov_95_upper) %>%
+    pivot_longer(c(cov_50, cov_95),
+                 names_to = "interval",
+                 values_to = "coverage") %>%
+    mutate(
+      ci_lower = ifelse(interval == "cov_50", cov_50_lower, cov_95_lower),
+      ci_upper = ifelse(interval == "cov_50", cov_50_upper, cov_95_upper),
+      interval = factor(ifelse(interval == "cov_50", "50% CrI", "95% CrI"),
+                        levels = c("50% CrI", "95% CrI"))
+    )
+
+  # coverage
+  p_cov <- ggplot(cov_data, aes(x = delay, y = coverage, colour = scenario)) +
+    geom_hline(yintercept = 0.95, linetype = "dashed",
+               colour = "seagreen", alpha = 0.8) +
+    geom_hline(yintercept = 0.50, linetype = "dashed",
+               colour = "lightseagreen", alpha = 0.8) +
+    geom_pointrange(aes(ymin = ci_lower, ymax = ci_upper),
+                    position = position_dodge(width = 0.85),
+                    size = 0.25, fatten = 1.8, alpha = 0.85, na.rm = TRUE) +
+    facet_wrap(~ group, ncol = 1, scales = "free_x") +
+    scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
+    scale_x_discrete(labels = scales::label_wrap(18),
+                     expand = expansion(add = 0.4)) +
+    scale_colour_manual(values = scenario_colours, drop = FALSE) +
+    labs(title = sprintf("Coverage of the %s", target_role),
+         x = NULL, y = "Coverage Probability", colour = "Scenario") +
+    theme_minimal() +
+    theme(
+      strip.text = element_text(size = 10, face = "bold", hjust = 0,
+                                margin = margin(t = 5, b = 10)),
+      axis.title.y = element_text(margin = margin(r = 10)),
+      panel.spacing = unit(1.5, "lines"),
+      panel.border = element_rect(colour = "darkgrey", fill = NA, linewidth = 1),
+      panel.grid.minor = element_blank()
+    ) +
+    guides(colour = guide_legend(ncol = 1))
+
+  # relative bias
+  p_bias <- ggplot(plot_data, aes(x = delay, y = bias_median, colour = scenario)) +
+    geom_hline(yintercept = 0, linetype = "dashed", colour = "black", alpha = 0.5) +
+    geom_pointrange(aes(ymin = bias_low, ymax = bias_high),
+                    position = position_dodge(width = 0.85),
+                    size = 0.25, fatten = 1.8, alpha = 0.85, na.rm = TRUE) +
+    facet_wrap(~ group, ncol = 1, scales = "free_x") +
+    scale_y_continuous(labels = scales::percent, limits = c(-1, 1)) +
+    scale_x_discrete(labels = scales::label_wrap(18), expand = expansion(add = 0.4)) +
+    scale_colour_manual(values = scenario_colours, drop = FALSE) +
+    labs(title = sprintf("Relative Bias of the %s", target_role),
+         x = NULL, y = "Relative Bias (Median vs True)", colour = "Scenario") +
+    theme_minimal() +
+    theme(
+      strip.text = element_text(size = 10, face = "bold", colour = "transparent",
+                                margin = margin(t = 5, b = 10)),
+      axis.title.y = element_text(margin = margin(r = 10, l = 10)),
+      panel.spacing = unit(1.5, "lines"),
+      panel.border = element_rect(colour = "darkgrey", fill = NA, linewidth = 1),
+      panel.grid.minor = element_blank()
+    ) +
+    guides(colour = guide_legend(ncol = 1))
+
+  combined_plot <- p_cov + p_bias +
+    plot_layout(ncol = 2, guides = "collect") &
+    theme(legend.position = "right",
+          legend.text = element_text(size = 9),
+          plot.title = element_text(size = 11, hjust = 0.5))
+
+  return(combined_plot)
 }
