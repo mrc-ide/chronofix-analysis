@@ -1,6 +1,4 @@
 #setwd("/Volumes/chronofix/Rebecca/chronofix-analysis")
-#pak::pkg_install("mrc-ide/chronofix@flatten-chains")
-#pak::pkg_install("mrc-ide/chronofix@generate_linelist")
 #pak::pkg_install("mrc-ide/chronofix")
 #pak::pkg_install("mrc-ide/monty@mrc-6769")
 
@@ -57,6 +55,7 @@ baseline <-
 
 hipercow_bundle_result(baseline)
 
+# Sanity check
 
 no_missing <- 
   hipercow::task_create_bulk_expr(
@@ -90,6 +89,7 @@ no_error_no_missing <-
 
 hipercow_bundle_result(no_error_no_missing)
 
+# Variable missing
 
 low_missingness <- 
   hipercow::task_create_bulk_expr(
@@ -101,6 +101,7 @@ low_missingness <-
 
 hipercow_bundle_result(low_missingness)
 
+# Variable error
 
 low_error <- 
   hipercow::task_create_bulk_expr(
@@ -169,6 +170,7 @@ very_large_sample <-
 
 hipercow_bundle_result(very_large_sample)
 
+# Delays
 
 long_delays <- 
   hipercow::task_create_bulk_expr(
@@ -237,7 +239,7 @@ hipercow_bundle_result(same_mean_delays)
 
 # Collate ------------------------------------------------------------------
 
-resources <- hipercow_resources(cores = 32)
+resources <- hipercow_resources(cores = 4)
 
 ## Baseline
 baseline_collate <- task_create_expr(
@@ -481,3 +483,12 @@ same_delay_mean <- task_create_expr(
 
 task_info(same_delay_mean)
 task_result(same_delay_mean) # "20260811-204247-bb25bb07"
+
+## All together ----------------------------------------------------------------
+
+all_scenarios <- task_create_expr(
+  orderly::orderly_run(
+    "sim_comparison",
+    parameters = list(comparison = "all_scenarios")),
+  resources = resources
+)

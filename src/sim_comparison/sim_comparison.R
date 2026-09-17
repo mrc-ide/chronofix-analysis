@@ -18,8 +18,11 @@ source("plot.R")
 
 scenarios <- comparison_scenarios[[pars$comparison]]
 
+# Filter out gaps used for legend when plotting all scenarios
+actual_scenarios <- scenarios[!grepl("^gap", scenarios)]
+
 # Loop through scenarios and fetch the individual summaries
-for (s in scenarios) {
+for (s in actual_scenarios) {
   remote_files <- c(
     "outputs/pars_summary.rds",
     "outputs/errors_summary.rds"
@@ -40,11 +43,15 @@ for (s in scenarios) {
 
 orderly_artefact(files = c("figures/ess_plot.pdf",
                           "figures/coverage_plot.pdf",
-                          "figures/bias_plot.pdf",
+                          #"figures/bias_plot.pdf",
                           "figures/posterior_delays.pdf",
                            "figures/posterior_prob_error.pdf",
                            "figures/sensitivity_events.pdf",
-                           "figures/sensitivity_individuals.pdf"),
+                           "figures/sensitivity_individuals.pdf",
+                          #"figures/coverage_by_group.pdf",
+                          "figures/coverage_and_bias_mean.pdf",
+                          "figures/coverage_and_bias_cv.pdf",
+                          "figures/coverage_and_bias_q95.pdf"),
                  description = "Diagnostic figures")
 
 dir.create("figures", recursive = TRUE, showWarnings = FALSE)
@@ -95,9 +102,9 @@ ggsave("figures/coverage_plot.pdf", plot_coverage(pars_summary),
        width = 21, height = 14)
 
 
-# Bias plot
-ggsave("figures/bias_plot.pdf", plot_bias(pars_summary),
-       width = 21, height = 14)
+# # Median Bias plot
+# ggsave("figures/bias_plot.pdf", plot_bias(pars_summary),
+#        width = 21, height = 14)
 
 
 # Posterior delays plot
@@ -109,13 +116,32 @@ ggsave("figures/posterior_prob_error.pdf",
        plot_posterior_prob_error(pars_summary),
        width = 14, height = 4)
 
-
 # Event level sensitivity
 ggsave("figures/sensitivity_events.pdf",
        plot_event_sensitivity(errors_summary), width = 14, height = 6)
 
-
 # Individual level sensitivity
 ggsave("figures/sensitivity_individuals.pdf",
        plot_indiv_sensitivity(errors_summary), 
-       width = 14, height = 8)
+       width = 10, height = 14)
+
+# # Plot delay performance
+# ggsave("figures/coverage_by_group.pdf",
+#        plot_coverage_by_group(pars_summary), 
+#        width = 14, height = 8)
+
+# Combined plot for Mean
+ggsave("figures/coverage_and_bias_mean.pdf",
+       plot_performance_figure(pars_summary, target_role = "Mean"), 
+       width = 13, height = 7.5)
+
+# Combined plot for CV
+ggsave("figures/coverage_and_bias_cv.pdf",
+       plot_performance_figure(pars_summary, target_role = "CV"), 
+       width = 13, height = 7.5)
+
+# Combined plot for 95 quantile
+ggsave("figures/coverage_and_bias_q95.pdf",
+       plot_performance_figure(pars_summary, target_role = "95th Quantile"), 
+       width = 13, height = 7.5)
+
