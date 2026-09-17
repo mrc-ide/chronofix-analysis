@@ -15,15 +15,32 @@ source("util.R")
 version_check("chronofix", "0.0.10")
 
 orderly::orderly_artefact(description = "MCMC outputs", 
-                          files = "samples.rds")
+                          files = c("outputs/samples.rds",
+                                    "outputs/data.rds",
+                                    "outputs/data_with_onset_inferred.rds",
+                                    "outputs/delay_map.rds",
+                                    "outputs/pars_summary.rds"))
+
+orderly::orderly_artefact(description = "MCMC plots", 
+                          files = c("figures/traceplots.pdf",
+                                    "figures/rankplots.pdf"))
+
 
 n_steps <- 3000
 burnin <- 1000
 thinning_factor <- 8
 
 raw_data <- read.csv("rstb20160308supp1.csv")
+
 data <- filter_data(raw_data)
 data <- chronofix_prepare_data(data, id = "row_id")
+data_with_onset_inferred <- filter_data(raw_data, onset_inferred = TRUE)
+data_with_onset_inferred <- 
+  chronofix_prepare_data(data_with_onset_inferred, id = "row_id")
+
+dir.create("outputs", showWarnings = FALSE)
+saveRDS(data, "outputs/data.rds")
+saveRDS(data_with_onset_inferred, "outputs/data_with_onset_inferred.rds")
 
 delay_map <- delay_info <- data.frame(
   from = c("onset", "onset", "onset", "onset", "onset", "onset",
@@ -35,6 +52,8 @@ delay_map <- delay_info <- data.frame(
             "hospitalised-alive", "hospitalised-dead", "hospitalised-dead"),
   distribution = "gamma"
 )
+
+saveRDS(data, "outputs/delay_map.rds")
 
 # MCMC settings ---------------------------------------------------------------
 
@@ -72,4 +91,4 @@ ggsave("figures/rankplots.pdf", rankplots(samples, burnin, pars_summary),
        width = 20, height = 12)
 
 pars_summary <- pars_summary %>% select(!variable)
-saveRDS(pars_summary, "pars_summary.rds")
+saveRDS(pars_summary, "outputs/pars_summary.rds")
