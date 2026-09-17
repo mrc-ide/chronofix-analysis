@@ -78,7 +78,7 @@ hyperparameters <- chronofix_hyperparameters(
 # Run MCMC -------------------------------------------------------------------
 
 samples <- chronofix_mcmc(data, delay_map, hyperparameters, control = control)
-saveRDS(samples, "samples.rds")
+saveRDS(samples, "outputs/samples.rds")
 
 pars_summary <- summarise_pars(samples, delay_map)
 
