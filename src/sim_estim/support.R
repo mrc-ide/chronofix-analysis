@@ -1,4 +1,6 @@
-summarise_pars <- function(samples, delay_info, true_prob_error) {
+summarise_pars <- function(samples, delay_info, true_prob_error, 
+                           true_delay_info) {
+  
   samples$data <- NULL
   samples_df <- posterior::as_draws_df(samples)
   
@@ -56,24 +58,34 @@ summarise_pars <- function(samples, delay_info, true_prob_error) {
                            true_value = true_prob_error)
   
   get_delay_info_i <- function(i) {
-    true_mean <- delay_info$mean[i]
-    true_cv <- delay_info$cv[i]
+    true_mean <- true_delay_info$mean[i]
+    true_cv <- true_delay_info$cv[i]
     
-    if (delay_info$distribution[i] == "gamma") {
+    if (true_delay_info$distribution[i] == "gamma") {
       true_shape <- 1 / true_cv^2
       true_scale <- true_mean / true_shape
       true_q95 <- stats::qgamma(0.95, shape = true_shape, scale = true_scale)
-      par <- c("mean", "shape", "cv", "q95")
-      true_value <- c(true_mean, true_shape, true_cv, true_q95)
       
-    } else if (delay_info$distribution[i] == "log-normal") {
+      if (delay_info$distribution[i] == "gamma") {
+        par <- c("mean", "shape", "cv", "q95")
+        true_value <- c(true_mean, true_shape, true_cv, true_q95)
+      } else {
+        par <- c("meanlog", "precisionlog", "mean", "cv", "q95")
+        true_value <- c(NA, NA, true_mean, true_cv, true_q95)
+      }
+    } else if (true_delay_info$distribution[i] == "log-normal") {
       true_precisionlog <- 1 / log(true_cv^2 + 1)
       true_meanlog <- log(true_mean) - 1 / (2 * true_precisionlog)
       true_sdlog <- sqrt(1 / true_precisionlog)
       true_q95 <- stats::qlnorm(0.95, meanlog = true_meanlog, sdlog = true_sdlog)
       
-      par <- c("meanlog", "precisionlog", "mean", "cv", "q95")
-      true_value <- c(true_meanlog, true_precisionlog, true_mean, true_cv, true_q95)
+      if (delay_info$distribution[i] == "log-normal") {
+        par <- c("meanlog", "precisionlog", "mean", "cv", "q95")
+        true_value <- c(true_meanlog, true_precisionlog, true_mean, true_cv, true_q95)
+      } else {
+        par <- c("mean", "shape", "cv", "q95")
+        true_value <- c(true_mean, NA, true_cv, true_q95)
+      }
     }
     
     delay <- paste0(delay_info$from[i], " to ", delay_info$to[i])
