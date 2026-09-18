@@ -23,6 +23,15 @@ version_check("chronofix", "0.0.10")
 scenario <- pars$scenario
 dataset <- pars$dataset
 
+if (scenario == "misspecify_gamma") {
+  data_scenario <- "lognormal_delays"
+  # baseline scenario assumes gamma delays
+  pars_scenario <- "baseline" 
+} else {
+  data_scenario <- scenario
+  pars_scenario <- scenario
+}
+
 n_steps <- 3000
 burnin <- 1000
 thinning_factor <- 8
@@ -32,7 +41,8 @@ orderly_dependency("sim_params", "latest",
                      "error_params.rds",
                      "scenarios.rds"))
 data_filename <- paste0("outputs/sim_data_", dataset, ".rds")
-orderly_dependency("sim_data", "latest(parameter:scenario == this:scenario)", 
+orderly_dependency("sim_data", 
+                   "latest(parameter:scenario == environment:data_scenario)", 
                    c("sim_data.rds" = data_filename))
 
 orderly_artefact(description = "MCMC outputs for simulation scenarios",
@@ -72,8 +82,8 @@ hyperparameters <- chronofix_hyperparameters(
 
 # Run MCMC -------------------------------------------------------------------
 
-date_model <- scenarios[[scenario]]$date_model
-error_model <- scenarios[[scenario]]$error_model
+date_model <- scenarios[[pars_scenario]]$date_model
+error_model <- scenarios[[pars_scenario]]$error_model
 delay_info <- date_params[[date_model]]$delay_info
 
 samples <- chronofix_mcmc(sim_data$observed_data, delay_info,
@@ -83,8 +93,11 @@ saveRDS(samples, "sim_estim.rds")
 
 # Summarise results and produce diagnostic plots-------------------------------
 
+true_date_model <- scenarios[[data_scenario]]$date_model
+true_delay_info <- date_params[[true_date_model]]$delay_info
 pars_summary <- summarise_pars(samples, delay_info, 
-                               error_params[[error_model]]$prob_error)
+                               error_params[[error_model]]$prob_error,
+                               true_delay_info)
 
 errors_summary <- summarise_errors(samples, sim_data)
 saveRDS(errors_summary, "errors_summary.rds")
