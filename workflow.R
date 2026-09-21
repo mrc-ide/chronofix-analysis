@@ -237,6 +237,17 @@ same_mean_delays <-
 
 hipercow_bundle_result(same_mean_delays)
 
+
+misspecify_gamma <- 
+  hipercow::task_create_bulk_expr(
+    orderly::orderly_run("sim_estim",
+                         parameters = list(scenario = "misspecify_gamma",
+                                           dataset = dataset)),
+    data.frame(dataset = seq_len(100)),
+    resources = hipercow::hipercow_resources(cores = 4))
+
+hipercow_bundle_result(misspecify_gamma)
+
 # Collate ------------------------------------------------------------------
 
 resources <- hipercow_resources(cores = 4)
@@ -393,6 +404,15 @@ same_mean_delays_collate <- task_create_expr(
   resources = resources
 )
 task_result(same_mean_delays_collate) # "20260811-200548-a27b2858"
+
+## Log-normal delays
+misspecify_gamma_collate <- task_create_expr(
+  orderly::orderly_run(
+    "sim_collate",
+    parameters = list(scenario = "misspecify_gamma")),
+  resources = resources
+)
+task_result(misspecify_gamma_collate)
 
 
 # Visualisations -------------------------------------------------------------
