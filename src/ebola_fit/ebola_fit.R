@@ -12,11 +12,10 @@ source("plot.R")
 orderly::orderly_shared_resource("util.R")
 source("util.R")
 
-version_check("chronofix", "0.0.10")
+version_check("chronofix", "0.0.11")
 
 orderly::orderly_artefact(description = "MCMC outputs", 
                           files = c("outputs/samples.rds",
-                                    "outputs/data.rds",
                                     "outputs/data_with_onset_inferred.rds",
                                     "outputs/delay_map.rds",
                                     "outputs/pars_summary.rds"))
@@ -39,7 +38,6 @@ data_with_onset_inferred <-
   chronofix_prepare_data(data_with_onset_inferred, id = "row_id")
 
 dir.create("outputs", showWarnings = FALSE)
-saveRDS(data, "outputs/data.rds")
 saveRDS(data_with_onset_inferred, "outputs/data_with_onset_inferred.rds")
 
 delay_map <- delay_info <- data.frame(
