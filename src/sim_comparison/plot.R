@@ -425,3 +425,83 @@ plot_performance_figure <- function(pars_summary, target_role = "Mean") {
 
   return(combined_plot)
 }
+
+
+plot_sensitivity_figure <- function(errors_summary, target_threshold = 0.5) {
+  
+  sens_data <- errors_summary %>%
+    filter(threshold == target_threshold) %>%
+    filter(!scenario %in% c("Missing dates only (0.2)",
+                            "No errors or missing dates")) %>%
+    filter(trimws(scenario) != "") %>%
+    mutate(scenario = factor(scenario,
+                             levels = setdiff(levels(scenario),
+                                              c("Missing dates only (0.2)",
+                                                "No errors or missing dates"))))
+  
+  indiv_data <- sens_data %>% 
+    filter(event == "individual") %>%
+    mutate(accuracy = n_true_errors_flagged / n_true_errors) %>%
+    filter(!is.na(accuracy))
+  
+  event_data <- sens_data %>% 
+    filter(event != "individual") %>%
+    group_by(scenario, group, event) %>%
+    summarise(pct_accuracy = sum(n_true_errors_flagged) / sum(n_true_errors),
+              .groups = "drop") %>%
+    filter(!is.na(pct_accuracy)) %>%
+    mutate(event = factor(event,
+                          levels = global_event_levels,
+                          labels = global_event_labels))
+  
+  # individual plot
+  p_indiv <- ggplot(indiv_data, aes(x = scenario, y = accuracy,
+                                    fill = scenario, colour = scenario)) +
+    geom_boxplot(alpha = 0.8, width = 0.7, outlier.size = 1,
+                 position = position_dodge2(reverse = TRUE, padding = 0.1)) +
+    facet_grid(group ~ .) +
+    scale_x_discrete(drop = TRUE) +
+    scale_y_continuous(limits = c(0, 1), labels = scales::percent) +
+    scale_fill_manual(values = scenario_colours, drop = FALSE) +
+    scale_colour_manual(values = scenario_colours, drop = FALSE) +
+    labs(title = "Individual-Level Sensitivity",
+         y = sprintf("Sensitivity (%.0f%% Threshold)", target_threshold * 100),
+         x = "") +
+    theme_bw() +
+    theme(panel.border = element_rect(colour = "darkgrey", fill = NA,
+                                      linewidth = 1),
+          strip.text = element_text(size = 9, face = "bold", angle = 270),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          axis.title.y = element_text(margin = margin(r = 10, l = 10)),
+          legend.position = "none")
+  
+  # event plot grid
+  p_event <- ggplot(event_data, aes(x = scenario, y = event,
+                                    fill = pct_accuracy)) +
+    geom_tile(colour = "white", linewidth = 0.5) +
+    geom_text(aes(label = sprintf("%.0f", pct_accuracy * 100)),
+              size = 2.8, colour = "grey20") +
+    facet_grid(group ~ .) +
+    scale_fill_gradient2(midpoint = 0.5,
+                         low = "firebrick", mid = "white", high = "steelblue", 
+                         limits = c(0, 1), labels = scales::percent,
+                         na.value = "grey95") +
+    scale_y_discrete(drop = FALSE, limits = rev) +
+    labs(title = "Event-Level Sensitivity",
+         y = "",
+         x = "",
+         fill = sprintf("Sensitivity\n(%.0f%% Threshold)",
+                        target_threshold * 100)) +
+    theme_bw() +
+    theme(strip.text = element_text(size = 9, face = "bold", angle = 270),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          panel.border = element_rect(colour = "darkgrey", fill = NA,
+                                      linewidth = 1),
+          panel.grid = element_blank(),
+          legend.title = element_text(margin = margin(b = 15)))
+  
+  combined_plot <- p_indiv + p_event + 
+    plot_layout(ncol = 2, widths = c(1, 1))
+  
+  return(combined_plot)
+}

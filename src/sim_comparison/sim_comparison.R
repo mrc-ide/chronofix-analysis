@@ -51,7 +51,9 @@ orderly_artefact(files = c("figures/ess_plot.pdf",
                           #"figures/coverage_by_group.pdf",
                           "figures/coverage_and_bias_mean.pdf",
                           "figures/coverage_and_bias_cv.pdf",
-                          "figures/coverage_and_bias_q95.pdf"),
+                          "figures/coverage_and_bias_q95.pdf",
+                          "figures/sensitivity_50.pdf",
+                          "figures/sensitivity_95.pdf"),
                  description = "Diagnostic figures")
 
 dir.create("figures", recursive = TRUE, showWarnings = FALSE)
@@ -144,4 +146,14 @@ ggsave("figures/coverage_and_bias_cv.pdf",
 ggsave("figures/coverage_and_bias_q95.pdf",
        plot_performance_figure(pars_summary, target_role = "95th Quantile"), 
        width = 13, height = 7.5)
+
+# Sensitivity - 50% threshold
+ggsave("figures/sensitivity_50.pdf",
+       plot_sensitivity_figure(errors_summary, target_threshold = 0.5),
+       width = 13, height = 9)
+
+# Sensitivity - 95% threshold
+ggsave("figures/sensitivity_95.pdf",
+       plot_sensitivity_figure(errors_summary, target_threshold = 0.95),
+       width = 13, height = 9)
 
