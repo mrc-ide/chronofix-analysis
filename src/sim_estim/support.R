@@ -1,7 +1,6 @@
 summarise_pars <- function(samples, delay_info, true_prob_error, 
                            true_delay_info) {
   
-  samples$data <- NULL
   samples_df <- posterior::as_draws_df(samples)
   
   # calculate mean and CV and 95th quantile for every individual posterior sample
@@ -113,7 +112,7 @@ summarise_pars <- function(samples, delay_info, true_prob_error,
 
 
 summarise_errors <- function(samples, data) {
-  sample_errors <- samples$data$error_indicators
+  sample_errors <- samples$augmented_data$error_indicators
   data_errors <- data$error_indicators
   n_samples <- dim(sample_errors)[3]
   

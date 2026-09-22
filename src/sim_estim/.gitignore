@@ -1,8 +1,13 @@
 # ---VVV--- added by orderly ---VVV----------------
 # Don't manually edit content between these markers
 date_params.rds
+error_params.rds
 scenarios.rds
 sim_estim.rds
+pars_summary.rds
+errors_summary.rds
+figures/rankplots.pdf
+figures/traceplots.pdf
+util.R
 # ---^^^--- added by orderly ---^^^----------------
 sim_data.rds
-util.R

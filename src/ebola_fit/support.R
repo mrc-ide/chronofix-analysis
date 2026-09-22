@@ -33,7 +33,6 @@ filter_data <- function(data, onset_inferred = FALSE) {
 
 
 summarise_pars <- function(samples, delay_info) {
-  samples$data <- NULL
   samples_df <- posterior::as_draws_df(samples)
   p_quantile <- c(0.025, 0.25, 0.75, 0.975)
   summary <- 

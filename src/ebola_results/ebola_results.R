@@ -29,12 +29,11 @@ orderly_artefact(description = "paper numbers",
 #                 files = "figures/delays_plot.pdf")
 
 samples <- readRDS("inputs/samples.rds")
-data <- readRDS("inputs/data.rds")
 data_with_onset_inferred <- readRDS("inputs/data_with_onset_inferred.rds")
 pars_summary <- readRDS("inputs/pars_summary.rds")
 
 dir.create("outputs", showWarnings = FALSE)
-chronofix::chronofix_linelist(samples, data, 
+chronofix::chronofix_linelist(samples, 
                               filename = "outputs/chronofix_linelist.xlsx")
 
 #dir.create("figures", showWarnings = FALSE)
