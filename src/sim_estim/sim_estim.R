@@ -27,7 +27,11 @@ if (scenario == "misspecify_gamma") {
   data_scenario <- "lognormal_delays"
   # baseline scenario assumes gamma delays
   pars_scenario <- "baseline" 
-} else {
+} else if (scenario == "misspecify_lognormal") {
+  data_scenario <- "baseline"
+  # baseline scenario assumes gamma delays
+  pars_scenario <- "lognormal_delays" 
+}
   data_scenario <- scenario
   pars_scenario <- scenario
 }
