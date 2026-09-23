@@ -505,3 +505,176 @@ plot_sensitivity_figure <- function(errors_summary, target_threshold = 0.5) {
   
   return(combined_plot)
 }
+
+plot_specificity_figure <- function(errors_summary, target_threshold = 0.5) {
+
+  spec_data <- errors_summary %>%
+    filter(threshold == target_threshold) %>%
+    filter(trimws(scenario) != "")
+
+  indiv_data <- spec_data %>%
+    filter(event == "individual") %>%
+    filter(n_true_non_errors > 0) %>%
+    mutate(specificity =
+             (n_true_non_errors - n_false_positives) / n_true_non_errors) %>%
+    filter(!is.na(specificity))
+
+  event_data <- spec_data %>%
+    filter(event != "individual") %>%
+    group_by(scenario, group, event) %>%
+    summarise(pct_specificity =
+                (sum(n_true_non_errors) - sum(n_false_positives)) /
+                sum(n_true_non_errors),
+              .groups = "drop") %>%
+    filter(!is.na(pct_specificity)) %>%
+    mutate(event = factor(event,
+                          levels = global_event_levels,
+                          labels = global_event_labels))
+
+  p_indiv <- ggplot(indiv_data, aes(x = scenario, y = specificity,
+                                    fill = scenario, colour = scenario)) +
+    geom_boxplot(alpha = 0.8, width = 0.7, outlier.size = 1,
+                 position = position_dodge2(reverse = TRUE, padding = 0.1)) +
+    facet_grid(group ~ .) +
+    scale_x_discrete(drop = TRUE) +
+    scale_y_continuous(limits = c(0, 1), labels = scales::percent) +
+    scale_fill_manual(values = scenario_colours, drop = FALSE) +
+    scale_colour_manual(values = scenario_colours, drop = FALSE) +
+    labs(title = "Individual-Level Specificity",
+         y = sprintf("Specificity (%.0f%% Threshold)", target_threshold * 100),
+         x = "") +
+    theme_bw() +
+    theme(panel.border = element_rect(colour = "darkgrey", fill = NA,
+                                      linewidth = 1),
+          strip.text = element_text(size = 9, face = "bold", angle = 270),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          axis.title.y = element_text(margin = margin(r = 10, l = 10)),
+          legend.position = "none")
+
+  p_event <- ggplot(event_data, aes(x = scenario, y = event,
+                                    fill = pct_specificity)) +
+    geom_tile(colour = "white", linewidth = 0.5) +
+    geom_text(aes(label = sprintf("%.0f", pct_specificity * 100)),
+              size = 2.8, colour = "grey20") +
+    facet_grid(group ~ .) +
+    scale_fill_gradient2(midpoint = 0.5,
+                         low = "firebrick", mid = "white", high = "steelblue",
+                         limits = c(0, 1), labels = scales::percent,
+                         na.value = "grey95") +
+    scale_y_discrete(drop = FALSE, limits = rev) +
+    labs(title = "Event-Level Specificity",
+         y = "",
+         x = "",
+         fill = sprintf("Specificity\n(%.0f%% Threshold)",
+                        target_threshold * 100)) +
+    theme_bw() +
+    theme(strip.text = element_text(size = 9, face = "bold", angle = 270),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          panel.border = element_rect(colour = "darkgrey", fill = NA,
+                                      linewidth = 1),
+          panel.grid = element_blank(),
+          legend.title = element_text(margin = margin(b = 15)))
+
+  combined_plot <- p_indiv + p_event +
+    plot_layout(ncol = 2, widths = c(1, 1))
+
+  return(combined_plot)
+}
+
+
+plot_all_specificity <- function(errors_summary) {
+
+  target_thresholds <- sort(unique(errors_summary$threshold))
+  plot_list <- list()
+  
+  for (i in seq_along(target_thresholds)) {
+    thr <- target_thresholds[i]
+    is_bottom_row <- (i == length(target_thresholds))
+    
+    spec_data <- errors_summary %>%
+      filter(threshold == thr) %>%
+      filter(trimws(scenario) != "")
+    
+    indiv_data <- spec_data %>% 
+      filter(event == "individual") %>%
+      filter(n_true_non_errors > 0) %>%
+      mutate(specificity = (n_true_non_errors - n_false_positives) /
+               n_true_non_errors) %>%
+      filter(!is.na(specificity))
+    
+    event_data <- spec_data %>% 
+      filter(event != "individual") %>%
+      group_by(scenario, group, event) %>%
+      summarise(
+        pct_specificity = (sum(n_true_non_errors) - sum(n_false_positives)) /
+          sum(n_true_non_errors), 
+        .groups = "drop"
+      ) %>%
+      filter(!is.na(pct_specificity)) %>%
+      mutate(event = factor(event,
+                            levels = global_event_levels,
+                            labels = global_event_labels))
+    
+    p_indiv <- ggplot(indiv_data, aes(x = scenario, y = specificity,
+                                      fill = scenario, colour = scenario)) +
+      geom_boxplot(alpha = 0.8, width = 0.7, outlier.size = 1) +
+      facet_grid(group ~ .) +
+      scale_x_discrete(drop = TRUE) +
+      scale_y_continuous(limits = c(0, 1), labels = scales::percent) +
+      scale_fill_manual(values = scenario_colours, drop = FALSE) +
+      scale_colour_manual(values = scenario_colours, drop = FALSE) +
+      labs(title = sprintf("Individual-Level Specificity (%.0f%% Threshold)", thr * 100),
+           y = "Specificity",
+           x = "") +
+      theme_bw() +
+      theme(panel.border = element_rect(colour = "darkgrey",
+                                        fill = NA, linewidth = 1),
+            strip.text.y = element_text(size = 9, face = "bold", angle = 270),
+            axis.title.y = element_text(margin = margin(r = 10, l = 10)),
+            legend.position = "none")
+    
+    p_event <- ggplot(event_data, aes(x = scenario, y = event,
+                                      fill = pct_specificity)) +
+      geom_tile(colour = "white", linewidth = 0.5) +
+      geom_text(aes(label = sprintf("%.0f", pct_specificity * 100)),
+                size = 2.8, colour = "grey20") +
+      facet_grid(group ~ .) +
+      scale_fill_gradient2(midpoint = 0.5,
+                           low = "firebrick", mid = "white", high = "steelblue", 
+                           limits = c(0, 1), labels = scales::percent,
+                           na.value = "grey95") +
+      scale_y_discrete(drop = FALSE, limits = rev, expand = c(0, 0)) +
+      labs(title = sprintf("Event-Level Specificity (%.0f%% Threshold)", thr * 100),
+           y = "",
+           x = "",
+           fill = "Specificity") +
+      theme_bw() +
+      theme(panel.border = element_rect(colour = "darkgrey",
+                                        fill = NA, linewidth = 1),
+            strip.text.y = element_text(size = 9, face = "bold", angle = 270),
+            panel.grid = element_blank(),
+            legend.title = element_text(margin = margin(b = 15)))
+    
+    # only show x-axis labels for bottom plot in the stack
+    if (is_bottom_row) {
+      p_indiv <- p_indiv +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1))
+      p_event <- p_event +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    } else {
+      # remove x-axis text and ticks for top plots
+      p_indiv <- p_indiv +
+        theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+      p_event <- p_event +
+        theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+    }
+
+    plot_list[[length(plot_list) + 1]] <- p_indiv
+    plot_list[[length(plot_list) + 1]] <- p_event
+  }
+  
+  combined_plot <- wrap_plots(plot_list, ncol = 2, widths = c(1, 1)) + 
+    plot_layout(guides = "collect")
+  
+  return(combined_plot)
+}
