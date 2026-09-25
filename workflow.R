@@ -248,6 +248,17 @@ misspecify_gamma <-
 
 hipercow_bundle_result(misspecify_gamma)
 
+
+misspecify_lognormal <- 
+  hipercow::task_create_bulk_expr(
+    orderly::orderly_run("sim_estim",
+                         parameters = list(scenario = "misspecify_lognormal",
+                                           dataset = dataset)),
+    data.frame(dataset = seq_len(100)),
+    resources = hipercow::hipercow_resources(cores = 4))
+
+hipercow_bundle_result(misspecify_lognormal)
+
 # Collate ------------------------------------------------------------------
 
 resources <- hipercow_resources(cores = 4)
@@ -405,7 +416,7 @@ same_mean_delays_collate <- task_create_expr(
 )
 task_result(same_mean_delays_collate) # "20260811-200548-a27b2858"
 
-## Log-normal delays
+## Delays misspecified as gamma (log-normal truth)
 misspecify_gamma_collate <- task_create_expr(
   orderly::orderly_run(
     "sim_collate",
@@ -413,6 +424,15 @@ misspecify_gamma_collate <- task_create_expr(
   resources = resources
 )
 task_result(misspecify_gamma_collate)
+
+## Delays misspecified as log-normal (gamma truth)
+misspecify_lognormal_collate <- task_create_expr(
+  orderly::orderly_run(
+    "sim_collate",
+    parameters = list(scenario = "misspecify_lognormal")),
+  resources = resources
+)
+task_result(misspecify_lognormal_collate)
 
 
 # Visualisations -------------------------------------------------------------
