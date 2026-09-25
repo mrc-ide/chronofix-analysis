@@ -18,7 +18,7 @@ source("support.R")
 source("plot.R")
 source("util.R")
 
-version_check("chronofix", "0.0.11")
+version_check("chronofix", "0.0.13")
 
 scenario <- pars$scenario
 dataset <- pars$dataset
@@ -73,10 +73,7 @@ control <- chronofix_mcmc_control(n_steps = n_steps,
                                   parallel = TRUE,
                                   n_workers = 4,
                                   earliest_possible_date = "2014-01-01",
-                                  latest_possible_date = "2015-01-01",
-                                  cascade_sampling = TRUE,
-                                  prob_update_estimated_dates = 1,
-                                  prob_update_error_indicators = 1)
+                                  latest_possible_date = "2015-01-01")
 hyperparameters <- chronofix_hyperparameters(
   gamma_shape_prior_shape = 1,
   gamma_shape_prior_rate = 0.1,

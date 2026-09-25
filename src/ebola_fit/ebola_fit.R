@@ -12,12 +12,11 @@ source("plot.R")
 orderly::orderly_shared_resource("util.R")
 source("util.R")
 
-version_check("chronofix", "0.0.11")
+version_check("chronofix", "0.0.13")
 
 orderly::orderly_artefact(description = "MCMC outputs", 
                           files = c("outputs/samples.rds",
                                     "outputs/data_with_onset_inferred.rds",
-                                    "outputs/delay_map.rds",
                                     "outputs/pars_summary.rds"))
 
 orderly::orderly_artefact(description = "MCMC plots", 
@@ -51,8 +50,6 @@ delay_map <- delay_info <- data.frame(
   distribution = "gamma"
 )
 
-saveRDS(data, "outputs/delay_map.rds")
-
 # MCMC settings ---------------------------------------------------------------
 
 control <- chronofix_mcmc_control(n_steps = n_steps,
@@ -61,10 +58,7 @@ control <- chronofix_mcmc_control(n_steps = n_steps,
                                   n_chains = 4,
                                   parallel = TRUE,
                                   n_workers = 4,
-                                  date_buffer = 15,
-                                  cascade_sampling = TRUE,
-                                  prob_update_estimated_dates = 1,
-                                  prob_update_error_indicators = 1)
+                                  date_buffer = 15)
 
 hyperparameters <- chronofix_hyperparameters(
   gamma_shape_prior_shape = 1,
