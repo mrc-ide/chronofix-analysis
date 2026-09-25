@@ -61,10 +61,7 @@ control <- chronofix_mcmc_control(n_steps = n_steps,
                                   n_chains = 4,
                                   parallel = TRUE,
                                   n_workers = 4,
-                                  date_buffer = 15,
-                                  cascade_sampling = TRUE,
-                                  prob_update_estimated_dates = 1,
-                                  prob_update_error_indicators = 1)
+                                  date_buffer = 15)
 
 hyperparameters <- chronofix_hyperparameters(
   gamma_shape_prior_shape = 1,
