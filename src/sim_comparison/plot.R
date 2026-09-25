@@ -98,6 +98,7 @@ plot_indiv_sensitivity <- function(errors_summary) {
 
 plot_coverage <- function(pars_summary) {
   coverage_data <- pars_summary %>%
+    filter(!is.na(true_value)) %>%
     group_by(scenario, par, delay, group, par_label) %>%
     summarise(cov50 = sum(q25 <= true_value & true_value <= q75),
               cov95 = sum(q2.5 <= true_value & true_value <= q97.5),

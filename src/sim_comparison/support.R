@@ -1,12 +1,4 @@
 comparison_scenarios <- list(
-  sanity = c("baseline", "no_error", "no_missing", "no_error_no_missing"),
-  variable_error = c("baseline", "low_error", "high_error"),
-  variable_sample_size = c("baseline", "very_small_sample", "small_sample",
-                           "moderate_sample", "very_large_sample"),
-  variable_delay_length = c("baseline", "short_delays", "long_delays"),
-  variable_delay_cv = c("baseline", "low_variability", "high_variability"),
-  variable_delay_distribution = c("baseline", "lognormal_delays"),
-  same_delay_means = c("baseline", "same_means"),
   all_scenarios = c(
     "baseline", 
     "gap1", "low_missingness", "no_missing", "no_error", "no_error_no_missing",
@@ -15,12 +7,18 @@ comparison_scenarios <- list(
     "gap4", "long_delays", "short_delays",
     "gap5", "high_variability", "low_variability",
     "gap6", "lognormal_delays", "same_means"
+  ),
+  misspecification_scenarios = c(
+    "baseline", "misspecify_lognormal",
+    "gap1",
+    "lognormal_delays", "misspecify_gamma"
   )
 )
 
 
 scenario_labels <- c(
   "baseline" = "Baseline",
+  "misspecify_lognormal" = "Lognormal fit to gamma data",
   
   # workaround to add some whitespace between scenario groups in the legend
   "gap1" = " ",
@@ -55,11 +53,13 @@ scenario_labels <- c(
   "gap6" = "      ",
   
   "lognormal_delays" = "Lognormal delays",
+  "misspecify_gamma" = "Gamma fit to lognormal data",
   "same_means" = "Same mean delay (7 days)"
 )
 
 scenario_colours <- c(
   "Baseline" = "#000000",
+  "Lognormal fit to gamma data" = "#00A0B0",
   
   # blank for the gaps in legend
   " " = "transparent",
@@ -89,6 +89,7 @@ scenario_colours <- c(
   "High variability (2x baseline cv)" = "#3F007D",
   
   "Lognormal delays" = "#F768A1",
+  "Gamma fit to lognormal data" = "#F2A900",
   "Same mean delay (7 days)" = "#7A0177"
 )
 
